@@ -1,9 +1,347 @@
 [gd_scene format=3 uid="uid://dwmpfidb7qba4"]
 
+[ext_resource type="Theme" uid="uid://d27b4w6eanc0f" path="res://graphics/themes/menutheme.tres" id="1_2wh52"]
+[ext_resource type="Script" uid="uid://bsc0d7aq0gbgk" path="res://scripts/main_menu.gd" id="1_yqorp"]
+[ext_resource type="Shader" uid="uid://hoty1xxv5ia1" path="res://graphics/shaders/MainMenu.gdshader" id="3_ow34m"]
+[ext_resource type="Texture2D" uid="uid://dj3h0rabrid5m" path="res://icon.svg" id="4_ow34m"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_2wh52"]
+shader = ExtResource("3_ow34m")
+shader_parameter/hole_center = Vector2(0.5, 0.5)
+shader_parameter/hole_radius = 0.2
+shader_parameter/edge_softness = 0.01
+shader_parameter/rect_size = Vector2(1, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8a8k8"]
+shader = ExtResource("3_ow34m")
+shader_parameter/hole_center = Vector2(0.8, 0.7)
+shader_parameter/hole_radius = 0.15
+shader_parameter/edge_softness = 0.01
+shader_parameter/rect_size = Vector2(1, 1)
+
+[sub_resource type="Gradient" id="Gradient_ow34m"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_kyd6q"]
+gradient = SubResource("Gradient_ow34m")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_wwruc"]
+texture = SubResource("GradientTexture1D_kyd6q")
+
+[sub_resource type="Animation" id="Animation_826wr"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Panel:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(416, 192)]
+}
+
+[sub_resource type="Animation" id="Animation_ucygd"]
+resource_name = "slide_cave"
+length = 5.0
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Panel:position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(416, 192), Vector2(-408, 192)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_mipys"]
+_data = {
+&"RESET": SubResource("Animation_826wr"),
+&"slide_cave": SubResource("Animation_ucygd")
+}
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8lupt"]
+
+[sub_resource type="Animation" id="Animation_ow34m"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("bg/Panel:position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(416, 192)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("TitleScreen:position")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(0, 0)]
+}
+tracks/3/type = "value"
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/path = NodePath("Settings:position")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(640, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_l72w3"]
+resource_name = "ready"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_mipys"]
+resource_name = "to_settings"
+length = 1.5
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("TitleScreen:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(-640, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Settings:position")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1.5),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector2(640, 0), Vector2(0, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_826wr"]
+_data = {
+&"RESET": SubResource("Animation_ow34m"),
+&"ready": SubResource("Animation_l72w3"),
+&"to_settings": SubResource("Animation_mipys")
+}
+
 [node name="MainMenu" type="Control" unique_id=1500635961]
+modulate = Color(1, 1, 1, 0)
+material = SubResource("ShaderMaterial_2wh52")
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_2wh52")
+script = ExtResource("1_yqorp")
+
+[node name="bg" type="ColorRect" parent="." unique_id=1690723093]
+material = SubResource("ShaderMaterial_8a8k8")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.09803922, 0.09019608, 0.19607843, 1)
+
+[node name="Panel" type="Panel" parent="bg" unique_id=1489419077]
+z_index = -1
+layout_mode = 0
+offset_left = 416.0
+offset_top = 192.0
+offset_right = 1439.9883
+offset_bottom = 320.0
+theme_override_styles/panel = SubResource("StyleBoxTexture_wwruc")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="bg" unique_id=492316423]
+libraries/ = SubResource("AnimationLibrary_mipys")
+autoplay = &"slide_cave"
+
+[node name="TitleScreen" type="Control" parent="." unique_id=766753445]
+anchors_preset = 0
+offset_right = 640.0
+offset_bottom = 360.0
+metadata/_edit_group_ = true
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TitleScreen" unique_id=1715265684]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 152.0
+offset_right = 168.0
+offset_bottom = 320.0
+metadata/_edit_group_ = true
+
+[node name="Play" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1683232696]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Play"
+
+[node name="Settings" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1475383543]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Settings"
+
+[node name="Exit" type="Button" parent="TitleScreen/VBoxContainer" unique_id=141068482]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Exit"
+
+[node name="Label" type="Label" parent="TitleScreen" unique_id=2090640395]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 64.0
+offset_right = 256.0
+offset_bottom = 127.0
+text = "Game logo"
+
+[node name="Peaks" type="TextureRect" parent="TitleScreen" unique_id=986769366]
+z_index = 2
+layout_mode = 0
+offset_top = -80.0
+offset_right = 1280.0
+offset_bottom = 56.0
+texture = ExtResource("4_ow34m")
+
+[node name="Settings" type="Control" parent="." unique_id=1848050210]
+anchors_preset = 0
+offset_left = 640.0
+offset_right = 1280.0
+offset_bottom = 360.0
+
+[node name="Label" type="Label" parent="Settings" unique_id=464689345]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 64.0
+offset_right = 86.0
+offset_bottom = 87.0
+text = "Settings"
+
+[node name="CheckButton" type="CheckButton" parent="Settings" unique_id=1327056461]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 160.0
+offset_right = 56.0
+offset_bottom = 192.0
+
+[node name="Button" type="Button" parent="Settings" unique_id=744446287]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 160.0
+offset_right = 152.0
+offset_bottom = 192.0
+text = "Apply"
+
+[node name="Label2" type="Label" parent="Settings" unique_id=434945793]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 128.0
+offset_right = 152.0
+offset_bottom = 151.0
+text = "Fullscreen mode"
+
+[node name="HSlider" type="HSlider" parent="Settings" unique_id=1457931190]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 216.0
+offset_right = 152.0
+offset_bottom = 264.0
+
+[node name="Label3" type="Label" parent="Settings" unique_id=1079086944]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 208.0
+offset_right = 152.0
+offset_bottom = 231.0
+text = "Master volume"
+
+[node name="volume" type="Label" parent="Settings" unique_id=589147266]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 256.0
+offset_right = 152.0
+offset_bottom = 279.0
+text = "Currently: "
+
+[node name="Label4" type="Label" parent="Settings" unique_id=1760656493]
+layout_mode = 0
+offset_left = 192.0
+offset_top = 128.0
+offset_right = 320.0
+offset_bottom = 151.0
+text = "Controls"
+horizontal_alignment = 1
+
+[node name="Button2" type="Button" parent="Settings" unique_id=2036214075]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 304.0
+offset_right = 128.0
+offset_bottom = 344.0
+text = "Go back"
+
+[node name="invisible_panel" type="Panel" parent="." unique_id=1240153294]
+visible = false
+layout_mode = 0
+offset_right = 640.0
+offset_bottom = 360.0
+theme_override_styles/panel = SubResource("StyleBoxEmpty_8lupt")
+
+[node name="Animations" type="AnimationPlayer" parent="." unique_id=646417311]
+libraries/ = SubResource("AnimationLibrary_826wr")
+autoplay = &"ready"
+
+[connection signal="pressed" from="TitleScreen/VBoxContainer/Play" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="TitleScreen/VBoxContainer/Settings" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="TitleScreen/VBoxContainer/Exit" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="Settings/Button" to="." method="_toggle_fullscreen"]
+[connection signal="pressed" from="Settings/Button2" to="." method="_on_exiting_settings"]
+[connection signal="animation_finished" from="Animations" to="." method="_on_animations_animation_finished"]

@@ -11,13 +11,23 @@ config_version=5
 [application]
 
 config/name="ProxectoEco"
+run/main_scene="uid://d00krikv8s4l3"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+Global="*uid://bh8wy8wbnyie"
+
 [display]
 
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/initial_position_type=4
+window/size/resizable=false
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+mouse_cursor/custom_image="uid://culh7evcdoic6"
 
 [dotnet]
 
@@ -29,6 +39,8 @@ project/assembly_name="ProxectoEco"
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)
