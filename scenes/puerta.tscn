@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/puerta.gd" id="1_puerta"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_puerta"]
+size = Vector2(150, 150)
+
+[node name="Puerta" type="Area2D"]
+collision_layer = 0
+collision_mask = 1
+monitorable = false
+script = ExtResource("1_puerta")
+
+[node name="Cuerpo" type="Polygon2D" parent="."]
+color = Color(0.16, 0.17, 0.22, 0.55)
+polygon = PackedVector2Array(-76, -20, 76, -20, 76, 20, -76, 20)
+
+[node name="Hoja" type="Polygon2D" parent="."]
+color = Color(0.62, 0.16, 0.18, 1)
+polygon = PackedVector2Array(-76, -20, 76, -20, 76, 20, -76, 20)
+
+[node name="MarcoSup" type="Polygon2D" parent="."]
+color = Color(0.85, 0.82, 0.72, 1)
+polygon = PackedVector2Array(-80, -34, 80, -34, 80, -20, -80, -20)
+
+[node name="MarcoInf" type="Polygon2D" parent="."]
+color = Color(0.85, 0.82, 0.72, 1)
+polygon = PackedVector2Array(-80, 20, 80, 20, 80, 34, -80, 34)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_puerta")

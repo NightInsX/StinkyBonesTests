@@ -34,6 +34,11 @@ enum Generador {
 
 enum Tipo { VACIO, MURO, SUELO, UMBRAL }
 
+## Se emite al terminar cada `generar()`, para que lo que dependa de las
+## dimensiones del mapa (como las señales por celda de SenalesTiles) se remonte
+## sin tener que adivinar cuándo ha cambiado la rejilla.
+signal generar_terminada(dimensiones: Vector2i)
+
 ## TileSet con el que se pinta. Si es null se construye uno proceduralmente.
 @export var tile_set: TileSet
 
@@ -53,6 +58,17 @@ enum Tipo { VACIO, MURO, SUELO, UMBRAL }
 ## conectividad: cualquier ruta que había antes sigue existiendo.
 @export_range(0, 6) var engrosar: int = 0
 
+## Anchura máxima de los pasillos, en tiles, contando con el pasillo. 1 deja el
+## mapa tal cual sale de DTL, que es de pasillos de 1 tile. Con 2 se ensancha una
+## parte de los pasillos para que el enemigo de 1.1 tiles quepa, y el resto se
+## queda en 1 tile a propósito: así no todas las salas quedan conectadas entre sí
+## y el enemigo de 1.1 tiles no puede ir a todas partes.
+@export_range(1, 3) var pasillo_max: int = 2
+
+## Fracción de pasillos estrechos que se ensanchan. 1 ensancha todos y deja el
+## mismo ancho en todo el mapa; 0.5 deja una mezcla de pasillos anchos y estrechos.
+@export_range(0.0, 1.0, 0.05) var proporcion_pasillo_ancho: float = 0.5
+
 @export_group("Pintado y física")
 @export_range(8, 128, 8) var tile: int = 32
 @export var pintar: bool = true
@@ -68,6 +84,19 @@ enum Tipo { VACIO, MURO, SUELO, UMBRAL }
 ## evita el truncamiento de rutas de Godot 4.7 en mapas enormes. Ojo: con 2 o
 ## más se cortan los pasillos de un solo tile de ancho.
 @export_range(1, 8) var celda_navegacion: int = 1
+## Lado del cuerpo que tiene que andar por la malla, en tiles. La malla se
+## ERODE por este valor antes de construirla, de forma que los pasillos más
+## estrechos que el cuerpo quedan directamente fuera de la navegación: es lo
+## único que garantiza que la ruta no le mande a empotrarse donde no cabe. Con
+## 1.1 el enemigo no usa los pasillos de un tile, pero sí los de dos, y con 0 se
+## construye la malla sobre el suelo tal cual, sin erosionar.
+@export_range(0.0, 4.0, 0.1) var cuerpo_nav: float = 1.1
+## La erosión se calcula sobre una rejilla `resolucion_nav` veces más fina que
+## los tiles. Hace falta porque un cuerpo de 1.1 tiles no cabe centrado en una
+## celda suelta: en un pasillo de DOS tiles sólo entra centrado en la línea
+## media, que cae justo en la frontera entre las dos celdas. Con la rejilla
+## partida a la mitad aparecen puntos de paso a ambos lados de esa frontera.
+@export_range(1, 4) var resolucion_nav: int = 2
 ## Log del resumen de la navegación al terminar de generar.
 @export var depurar: bool = true
 
@@ -105,6 +134,12 @@ var _dtl: Object = null
 var _tiles_generados: TileMapLayer = null
 var _cuerpos: StaticBody2D = null
 var _regiones: Array[NavigationRegion2D] = []
+## Un byte por celda de la rejilla de navegación (más fina que los tiles cuando
+## hay `cuerpo_nav`), 1 si el cuerpo cabe ahí. Se guarda para poder preguntar por
+## la malla sin consultar al servidor, que tarda un frame en sincronizarse.
+var _nav: PackedByteArray = PackedByteArray()
+var _nav_cols: int = 0
+var _nav_filas: int = 0
 
 
 # Se genera en _enter_tree y no en _ready para que la NavigationRegion2D exista
@@ -131,6 +166,7 @@ func generar(nueva_semilla: bool = true) -> void:
 	_rejilla = _normalizar(_datos)
 	if engrosar > 0:
 		_engrosar_suelo(engrosar)
+	_ensanchar_pasillos(pasillo_max)
 	_recortar()
 	if marco:
 		_poner_marco(grosor_marco)
@@ -140,10 +176,12 @@ func generar(nueva_semilla: bool = true) -> void:
 	if colision_muros:
 		_construir_colision()
 	if generar_navegacion:
-		_construir_navegacion()
+		_construir_malla()
 
 	if depurar:
 		_imprimir_resumen()
+
+	generar_terminada.emit(dimensiones())
 
 
 func punto_inicial() -> Vector2:
@@ -196,6 +234,46 @@ func dimensiones() -> Vector2i:
 ## Centro en píxeles de una celda, ya en coordenadas de mundo.
 func centro_celda(celda: Vector2i) -> Vector2:
 	return to_global(_centro_celda(celda))
+
+
+## ¿Un punto del mundo cae en la malla de navegación? Responde con la máscara que
+## se calculó al generar, así que contesta al instante y sin esperar a que el
+## servidor sincronice. False en cualquier punto que no sea suelo navegable, lo
+## que incluye los pasillos demasiado estrechos para `cuerpo_nav`.
+func es_navegable(punto: Vector2) -> bool:
+	if _nav.is_empty():
+		# Sin máscara sólo hay malla si no se erosionó, y entonces vale el suelo.
+		return es_transitable(celda_de(punto))
+	var local := to_local(punto)
+	var sub := float(tile) / float(maxi(resolucion_nav, 1))
+	var cx := int(floor(local.x / sub))
+	var cy := int(floor(local.y / sub))
+	if cx < 0 or cy < 0 or cx >= _nav_cols or cy >= _nav_filas:
+		return false
+	return _nav[cy * _nav_cols + cx] != 0
+
+
+## ¿La celda tiene algún punto navegable? Es más generoso que `es_navegable` en el
+## centro, porque el centro de una celda no tiene por qué servir: en un pasillo de
+## dos tiles el cuerpo sólo entra centrado en la frontera entre las dos celdas.
+func celda_navegable(celda: Vector2i) -> bool:
+	if not es_transitable(celda):
+		return false
+	if _nav.is_empty():
+		return true
+	var paso := maxi(resolucion_nav, 1)
+	for dy in range(paso):
+		for dx in range(paso):
+			if es_navegable(_centro_sub(celda, dx, dy)):
+				return true
+	return false
+
+
+## Centro de una de las subceldas en las que se divide una celda al navegar.
+func _centro_sub(celda: Vector2i, dx: int, dy: int) -> Vector2:
+	var sub := float(tile) / float(maxi(resolucion_nav, 1))
+	var origen := _centro_celda(celda) - Vector2(tile, tile) * 0.5
+	return to_global(origen + Vector2((dx + 0.5) * sub, (dy + 0.5) * sub))
 
 
 ## Celda que contiene un punto del mundo.
@@ -457,6 +535,157 @@ func _engrosar_suelo(radio: int) -> void:
 				_rejilla[y][x] = Tipo.SUELO
 
 
+## Convierte muros en suelo ensanchando a `pasillo_max` tiles los pasillos
+## estrechos, y deja el resto como estaban. DTL sólo garantiza pasillos de UN
+## tile: su `way_min`/`way_max` no controlan la anchura (medido: con `way_max` de 1
+## a 8 la mezcla de anchos apenas cambia, y los tramos de 2 tiles que salen son
+## parches sueltos en las junctions, no pasillos). Como el ancho decide si el
+## enemigo cabe o no, hace falta que el ancho sea algo que se pueda controlar.
+##
+## Se agrupan las celdas de pasillo de 1 tile por\Test connectivity, y cada grupo
+## se ensancha por UN lado, el mismo para todo el grupo: si se alternase lado a
+## celda saldrían dientes de sierra en vez de un pasillo. Un grupo al que no se le
+## puede ensanchar (le rodea el borde del mapa) se deja en 1 tile, que también es
+## justo lo que se quiere: no todos los pasillos pueden ser anchos.
+func _ensanchar_pasillos(ancho_max: int) -> void:
+	if ancho_max <= 1 or _rejilla.is_empty():
+		return
+	for _vuelta in range(4):
+		var grupos := _grupos_de_pasillo()
+		if grupos.is_empty():
+			return
+		var tocados := 0
+		for grupo in grupos:
+			if _anchura_de(grupo[0]) >= ancho_max:
+				continue
+			if randf() > proporcion_pasillo_ancho:
+				continue
+			if not _ensanchar_grupo(grupo):
+				continue
+			tocados += 1
+		if tocados == 0:
+			return
+
+
+## Ancho local de una celda: cuántas celdas de suelo hay en línea recta a cada
+## lado, y el menor de los dos ejes. En un pasillo de 1 tile da 1; en una sala
+## de 3x3 o más da 3 o más.
+func _anchura_de(celda: Vector2i) -> int:
+	return mini(_recorrido(celda, Vector2i(1, 0)), _recorrido(celda, Vector2i(0, 1)))
+
+
+func _recorrido(celda: Vector2i, dir: Vector2i) -> int:
+	var total := 0
+	for signo: int in [1, -1]:
+		var paso: Vector2i = dir * signo
+		var c := celda + paso
+		while es_transitable(c) and _es_suelo_pasillo(c):
+			total += 1
+			c += paso
+	return total + 1
+
+
+## Las celdas estrechas de un pasillo no son sólo las de suelo: un pasillo de 1
+## tile entre salas lleva suelo, y a los lados pared. Se agrupan las celdas de
+## SUELO cuyo ancho local es 1 y que conectan con otra igual.
+func _grupos_de_pasillo() -> Array:
+	var h := _rejilla.size()
+	var w := (_rejilla[0] as Array).size()
+	var visto := {}
+	var grupos: Array = []
+	for y in h:
+		for x in w:
+			var inicio := Vector2i(x, y)
+			if visto.has(inicio) or not es_transitable(inicio):
+				continue
+			if _anchura_de(inicio) > 1:
+				continue
+			var grupo := _inundar(inicio, visto, true)
+			grupos.append(grupo)
+	return grupos
+
+
+## Inundación en 4 direcciones. `solo_estrechas` limita el grupo a celdas del
+## mismo tipo de pasillo, que es lo que hace falta para no comerse media sala.
+func _inundar(inicio: Vector2i, visto: Dictionary, solo_estrechas: bool) -> Array:
+	var grupo: Array = [inicio]
+	visto[inicio] = true
+	var cola: Array = [inicio]
+	while not cola.is_empty():
+		var actual: Vector2i = cola.pop_back()
+		for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var v := actual + d
+			if visto.has(v) or not es_transitable(v):
+				continue
+			if solo_estrechas and _anchura_de(v) > 1:
+				continue
+			visto[v] = true
+			grupo.append(v)
+			cola.append(v)
+	return grupo
+
+
+## Pasa a suelo las celdas de muro que hay al lado del grupo, todas por el mismo
+## lado. Devuelve false si no hay sitio, que pasa en los pasillos que se apoyan
+## en el borde del mapa.
+func _ensanchar_grupo(grupo: Array) -> bool:
+	var eje := _eje_del_grupo(grupo)
+	if eje == Vector2i.ZERO:
+		return false
+	var lateral := Vector2i(-eje.y, eje.x)
+
+	var mejor_lado := Vector2i.ZERO
+	var mejor_cuenta := 0
+	for signo: int in [1, -1]:
+		var lado: Vector2i = lateral * signo
+		var cuenta := 0
+		for celda: Vector2i in grupo:
+			var v: Vector2i = celda + lado
+			if _es_muro(v):
+				cuenta += 1
+		if cuenta > mejor_cuenta:
+			mejor_cuenta = cuenta
+			mejor_lado = lado
+	if mejor_cuenta == 0:
+		return false
+
+	for celda: Vector2i in grupo:
+		var v: Vector2i = celda + mejor_lado
+		if _es_muro(v):
+			_rejilla[v.y][v.x] = Tipo.SUELO
+	return true
+
+
+## Eje mayor de un grupo de celdas: si se extiende más en horizontal que en
+## vertical, es un pasillo horizontal y se ensancha en vertical, y al revés.
+func _eje_del_grupo(grupo: Array) -> Vector2i:
+	var minx := 99999999
+	var maxx := -1
+	var miny := 99999999
+	var maxy := -1
+	for celda: Vector2i in grupo:
+		minx = mini(minx, celda.x)
+		maxx = maxi(maxx, celda.x)
+		miny = mini(miny, celda.y)
+		maxy = maxi(maxy, celda.y)
+	if maxx - minx >= maxy - miny:
+		return Vector2i(1, 0)
+	return Vector2i(0, 1)
+
+
+func _es_muro(celda: Vector2i) -> bool:
+	if celda.y < 0 or celda.y >= _rejilla.size():
+		return false
+	var fila: Array = _rejilla[celda.y]
+	if celda.x < 0 or celda.x >= fila.size():
+		return false
+	return fila[celda.x] == Tipo.MURO
+
+
+func _es_suelo_pasillo(celda: Vector2i) -> bool:
+	return es_transitable(celda)
+
+
 # ---------------------------------------------------------------- particionado
 ## Particiona las celdas de un tipo en rectángulos que se tocan exactamente y
 ## nunca se solapan. Ese requisito es el que hace que la navegación funcione.
@@ -543,6 +772,25 @@ func _construir_colision() -> void:
 	_cuerpos = cuerpo
 
 
+## Construye la malla, erosionada por el cuerpo si hace falta. Si la erosión se
+## queda sin nada (un mapa de pasillos de un solo tile no tiene ni un punto por
+## el que quepa un cuerpo de 1.1 tiles) se vuelve a construir sin ella, porque
+## peor un enemigo que roza los muros que un enemigo que no se mueve.
+func _construir_malla() -> void:
+	_nav = PackedByteArray()
+	_nav_cols = 0
+	_nav_filas = 0
+	if cuerpo_nav > 0.0:
+		_construir_navegacion_erosionada()
+		if not _regiones.is_empty():
+			return
+		push_warning("DTLMapa: con `cuerpo_nav` de %.2f tiles no queda malla navegable; "
+				% cuerpo_nav
+				+ "se construye sin erosionar. Baja `cuerpo_nav`, o usa un mapa de salas "
+				+ "con pasillos de dos tiles, que es lo que sí aguanta ese cuerpo.")
+	_construir_navegacion()
+
+
 ## Un polígono POR CELDA transitable, no rectángulos fusionados.
 ##
 ## Godot 2D sólo enlaza dos polígonos de navegación si comparten una arista
@@ -575,8 +823,69 @@ func _construir_navegacion() -> void:
 			verts.append(origen + Vector2(lado, lado))
 			verts.append(origen + Vector2(0.0, lado))
 			indices.append(PackedInt32Array([b, b + 1, b + 2, b + 3]))
+
+	_fregar_navegacion(poly, verts, indices)
+
+
+## Malla erosionada por el cuerpo. Se recorre una rejilla `resolucion_nav` veces
+## más fina que el tile y sólo se emite un polígono donde el cuerpo cabe entero.
+## Los subcuadrados contiguos comparten arista exacta, que es lo que Godot
+## necesita para enlazarlos.
+func _construir_navegacion_erosionada() -> void:
+	var sub := float(tile) / float(maxi(resolucion_nav, 1))
+	var medio := cuerpo_nav * float(tile) * 0.5
+	var cols := _rejilla[0] as Array
+	var filas := _rejilla.size()
+	var n_sub := resolucion_nav
+
+	_nav_cols = cols.size() * n_sub
+	_nav_filas = filas * n_sub
+	_nav.resize(_nav_cols * _nav_filas)
+	_nav.fill(0)
+
+	var poly := NavigationPolygon.new()
+	var verts := PackedVector2Array()
+	var indices: Array = []
+	for cy in range(_nav_filas):
+		for cx in range(_nav_cols):
+			var centro := Vector2((cx + 0.5) * sub, (cy + 0.5) * sub)
+			if not _cabe_cuerpo(centro, medio):
+				continue
+			_nav[cy * _nav_cols + cx] = 1
+			var origen := Vector2(cx * sub, cy * sub)
+			var b := verts.size()
+			verts.append(origen)
+			verts.append(origen + Vector2(sub, 0.0))
+			verts.append(origen + Vector2(sub, sub))
+			verts.append(origen + Vector2(0.0, sub))
+			indices.append(PackedInt32Array([b, b + 1, b + 2, b + 3]))
 	if indices.is_empty():
-		push_warning("DTLMapa: no hay suelo transitable, se omite la navegación.")
+		_nav = PackedByteArray()
+		_nav_cols = 0
+		_nav_filas = 0
+	_fregar_navegacion(poly, verts, indices)
+
+
+## ¿El cuadrado de lado `2*medio` centrado en `centro` cabe entero en el suelo?
+## Se miran todas las celdas que el cuadrado pisa, incluidas las de las esquinas.
+func _cabe_cuerpo(centro: Vector2, medio: float) -> bool:
+	var x0 := int(floor((centro.x - medio) / tile))
+	var x1 := int(floor((centro.x + medio - 0.001) / tile))
+	var y0 := int(floor((centro.y - medio) / tile))
+	var y1 := int(floor((centro.y + medio - 0.001) / tile))
+	for y in range(y0, y1 + 1):
+		for x in range(x0, x1 + 1):
+			if not es_transitable(Vector2i(x, y)):
+				return false
+	return true
+
+
+func _fregar_navegacion(poly: NavigationPolygon, verts: PackedVector2Array,
+		indices: Array) -> void:
+	if indices.is_empty():
+		# Ni con erosión ni sin ella queda malla: se deja al mapa sin navegar en
+		# vez de crear una región vacía, que el servidor no se traga bien.
+		_regiones.clear()
 		return
 	poly.vertices = verts
 	for idx in indices:
@@ -584,8 +893,8 @@ func _construir_navegacion() -> void:
 	if indices.size() > 3600:
 		push_warning("DTLMapa: %d polígonos de navegación. Por encima de ~3600, " % indices.size()
 				+ "NavigationServer2D.map_get_path() de Godot 4.7 devuelve rutas truncadas. "
-				+ "Baja `ancho`/`alto`; subir `celda_navegacion` también sirve, pero parte "
-				+ "en dos los pasillos de un solo tile de ancho.")
+				+ "Baja `ancho`/`alto` o sube `cuerpo_nav`, que deja fuera los pasillos "
+				+ "estrechos. Subir `resolucion_nav` empeoraría esto: multiplica los polígonos.")
 
 	var region := NavigationRegion2D.new()
 	region.name = nombre_region

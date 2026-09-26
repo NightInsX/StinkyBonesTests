@@ -6,9 +6,16 @@
 [ext_resource type="Texture2D" uid="uid://m1am600blsbx" path="res://graphics/sprites/girl.png" id="5_kdubu"]
 [ext_resource type="PackedScene" path="res://scenes/mapa_dtl.tscn" id="6_mapa"]
 [ext_resource type="Script" uid="uid://derhf7g2jn2xf" path="res://scripts/mapa_colocacion.gd" id="7_colocar"]
+[ext_resource type="Script" path="res://scripts/senales_tiles.gd" id="8_senales"]
+[ext_resource type="PackedScene" path="res://scenes/llave.tscn" id="9_llave"]
+[ext_resource type="PackedScene" path="res://scenes/puerta.tscn" id="10_puerta"]
+[ext_resource type="Script" path="res://scripts/objetivo.gd" id="11_objetivo"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_girl"]
 size = Vector2(131, 130)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_enemigo"]
+size = Vector2(141, 140)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_oido"]
 radius = 55.0
@@ -26,11 +33,22 @@ position = Vector2(-2, 4)
 
 [node name="MapaDTL" parent="." unique_id=18438119 instance=ExtResource("6_mapa")]
 
+[node name="SenalesTiles" type="Node2D" parent="."]
+script = ExtResource("8_senales")
+nodo_mapa = NodePath("../MapaDTL")
+
 [node name="ColocarEnMapa" type="Node" parent="." unique_id=934019837]
 script = ExtResource("7_colocar")
 nodos = Array[NodePath]([NodePath("../girl"), NodePath("../Enemigo")])
 celda_preferida = Vector2i(3, 3)
 separacion = 640.0
+
+[node name="Llave" parent="." instance=ExtResource("9_llave")]
+
+[node name="Puerta" parent="." instance=ExtResource("10_puerta")]
+
+[node name="Objetivo" type="Node" parent="."]
+script = ExtResource("11_objetivo")
 
 [node name="girl" type="CharacterBody2D" parent="." unique_id=339200328]
 position = Vector2(587, 488)
@@ -53,16 +71,14 @@ collision_mask = 0
 shape = SubResource("CircleShape2D_oido")
 
 [node name="Camara" type="Camera2D" parent="girl" unique_id=32754225]
+zoom = Vector2(0.5, 0.5)
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
 [node name="Enemigo" type="CharacterBody2D" parent="." unique_id=1308254453]
 position = Vector2(95, 100)
-scale = Vector2(0.7, 0.7)
 motion_mode = 1
 script = ExtResource("4_q6r6c")
-nodo_jugadora = NodePath("../girl")
-nodo_mapa = NodePath("../MapaDTL")
 metadata/_edit_group_ = true
 
 [node name="Sprite2D" type="Sprite2D" parent="Enemigo" unique_id=954296086]
@@ -71,7 +87,7 @@ texture = ExtResource("5_kdubu")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Enemigo" unique_id=1131518554]
 position = Vector2(-1, 1)
-shape = SubResource("RectangleShape2D_girl")
+shape = SubResource("RectangleShape2D_enemigo")
 
 [node name="Agente" type="NavigationAgent2D" parent="Enemigo" unique_id=2106885670]
 target_desired_distance = 20.0

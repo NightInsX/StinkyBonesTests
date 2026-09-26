@@ -9,6 +9,11 @@ extends Node2D
 # scripts/pasillo.gd), así que no hace falta ninguna lista de cuerpos
 # detectados aquí ni conectar señales a mano.
 const AREA_GROUP := "echo_onda"
+## Grupo del nodo raiz de la onda. El Area2D de arriba es anonymously para la
+## física (que sólo necesita la forma), pero quien quiera saber CUÁNDO termina
+## la onda, de qué color es o hacia dónde apunta necesita el nodo entero, así
+## que la raíz también se apunta a un grupo. Ver scripts/senales_tiles.gd.
+const FUENTE_GROUP := "eco_fuente"
 
 # Capas de colisión: deciden quién oye a quién. Quien lanza la onda elige en
 # qué capa la mete, y cada oyente pone en su máscara las capas que le
@@ -33,6 +38,7 @@ var _wave_shape : ConvexPolygonShape2D = null
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	_build_wave_area()
+	add_to_group(FUENTE_GROUP)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

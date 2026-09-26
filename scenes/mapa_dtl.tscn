@@ -4,10 +4,12 @@
 
 [node name="MapaDTL" type="Node2D"]
 script = ExtResource("1_mapa")
-generador = 0
-ancho = 25
-alto = 25
+generador = 4
+ancho = 51
+alto = 51
 semilla_aleatoria = true
 tile = 128
 room_min = Vector2i(3, 3)
 room_max = Vector2i(6, 5)
+way_min = 1
+way_max = 2

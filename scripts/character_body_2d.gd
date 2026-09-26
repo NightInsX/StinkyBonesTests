@@ -10,6 +10,12 @@ const Ecolocalización = preload("res://scenes/echo.tscn")
 
 var cooldown := Timer.new()
 
+## true cuando lleva la llave del laberinto encima. Lo pone Llave al tocarla y lo
+## mira Puerta para decidir si se abre. Vive aquí y no en la llave ni en la puerta
+## porque la llave no conoce a la puerta y la puerta no tiene por qué saber quién
+## la recogió: el estado es de quien lo lleva.
+var tiene_llave: bool = false
+
 @onready var _oido: Area2D = $Oido
 
 
