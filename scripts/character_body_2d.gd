@@ -1,7 +1,7 @@
 extends CharacterBody2D
 
 
-const SPEED = 300.0
+const SPEED = 250.0
 const Ecolocalización = preload("res://scenes/echo.tscn")
 
 @export var wave_max_radius: float = 500.0
@@ -10,10 +10,19 @@ const Ecolocalización = preload("res://scenes/echo.tscn")
 
 var cooldown := Timer.new()
 
+@onready var _oido: Area2D = $Oido
+
+
 func _ready() -> void:
 	add_child(cooldown)
 	cooldown.wait_time = wave_cooldown
 	cooldown.one_shot = true
+	
+	if _oido == null:
+		push_warning("character_body_2d.gd: falta el Area2D hijo 'Oido', no oirá nada")
+	else:
+		_oido.collision_mask = Echo.CAPA_ONDA_ENEMIGA
+		_oido.area_entered.connect(_on_onda_entrada)
 
 
 func _physics_process( _delta: float) -> void:
@@ -25,24 +34,31 @@ func _physics_process( _delta: float) -> void:
 	move_and_slide()
 
 
-# El Timer actúa de enfriamiento: mientras esté parado se puede volver a
-# lanzar. Con one_shot se para solo al expirar, así que no hay que resetearlo.
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("Echo") and cooldown.is_stopped():
 		emitir_onda()
 
 
+func _on_onda_entrada(area: Area2D) -> void:
+	if not area.is_in_group(Echo.AREA_GROUP):
+		return
+	var onda := area.get_parent() as Echo
+	if onda == null:
+		return
+	print("[jugadora] OÍDO: onda desde ", onda.global_position, " radio=", onda.radio_actual())
+
+
 func emitir_onda() -> void:
 	var wave := Ecolocalización.instantiate() as Echo
-	# Hija de la niña, no de la escena: así la onda nace pegada a ella.
-	add_child(wave)
-	# Ojo: al ser hija hay que posicionarla en coordenadas LOCAL. Si le
-	# pusiéramos global_position antes de add_child(), su position ya valdría
-	# (514, 349) y al colgar de la niña se sumaría otra vez el transform del
-	# padre, dejando la onda en (1028, 698), en el pasillo de al lado.
-	wave.position = Vector2.ZERO
+
+	wave.capa = Echo.CAPA_ONDA_JUGADORA
 	wave.max_radius = wave_max_radius
 	wave.duration = wave_duration
+	add_child(wave)
+	
+	wave.top_level = true
+	wave.global_position = global_position
+	wave.rotation = (get_global_mouse_position() - global_position).angle()
 	cooldown.start()
 
-	print("[personaje] onda lanzada en ", wave.global_position, " radio=", wave.max_radius)
+	print("[personaje] onda lanzada en ", wave.global_position, " radio=", wave.max_radius, " dir=", wave.rotation)

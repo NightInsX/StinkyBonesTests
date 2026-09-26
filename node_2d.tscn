@@ -3,15 +3,27 @@
 [ext_resource type="Script" uid="uid://b530156is5fdc" path="res://scripts/character_body_2d.gd" id="1_0e48y"]
 [ext_resource type="Texture2D" uid="uid://dj3h0rabrid5m" path="res://icon.svg" id="2_epypp"]
 [ext_resource type="PackedScene" path="res://scenes/pasillo.tscn" id="3_pasillo"]
+[ext_resource type="Script" uid="uid://cyef8mye6q3wp" path="res://enemigo.gd" id="4_q6r6c"]
+[ext_resource type="Texture2D" uid="uid://m1am600blsbx" path="res://graphics/sprites/girl.png" id="5_kdubu"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ybya7"]
 size = Vector2(131, 130)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_oido"]
+radius = 55.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vjsud"]
+size = Vector2(144, 136)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_oido_enemigo"]
+radius = 60.0
 
 [node name="Node2D" type="Node2D" unique_id=1357452882]
 position = Vector2(-2, 4)
 
 [node name="girl" type="CharacterBody2D" parent="." unique_id=339200328]
-position = Vector2(514, 349)
+position = Vector2(708, 294)
+scale = Vector2(0.8, 0.8)
 script = ExtResource("1_0e48y")
 metadata/_edit_group_ = true
 
@@ -22,5 +34,35 @@ texture = ExtResource("2_epypp")
 position = Vector2(-1, -1)
 shape = SubResource("RectangleShape2D_ybya7")
 
+[node name="Oido" type="Area2D" parent="girl" unique_id=1862528305]
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="girl/Oido" unique_id=688803818]
+shape = SubResource("CircleShape2D_oido")
+
 [node name="Pasillo" parent="." unique_id=844598171 instance=ExtResource("3_pasillo")]
-position = Vector2(700, 349)
+position = Vector2(724, 147)
+
+[node name="Pasillo2" parent="." unique_id=1569722931 instance=ExtResource("3_pasillo")]
+position = Vector2(723, 466)
+
+[node name="Enemigo" type="CharacterBody2D" parent="." unique_id=1308254453]
+position = Vector2(95, 100)
+script = ExtResource("4_q6r6c")
+metadata/_edit_group_ = true
+
+[node name="Sprite2D" type="Sprite2D" parent="Enemigo" unique_id=954296086]
+modulate = Color(1, 0.24524, 0.18784568, 1)
+texture = ExtResource("5_kdubu")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemigo" unique_id=1131518554]
+position = Vector2(-1, 1)
+shape = SubResource("RectangleShape2D_vjsud")
+
+[node name="Oido" type="Area2D" parent="Enemigo" unique_id=974731179]
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemigo/Oido" unique_id=1290024390]
+shape = SubResource("CircleShape2D_oido_enemigo")

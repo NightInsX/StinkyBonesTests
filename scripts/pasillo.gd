@@ -12,6 +12,9 @@ var _onda : Echo = null
 
 
 func _ready() -> void:
+	# Solo oye las ondas que lanza la jugadora. Las del enemigo van en otra
+	# capa, así que ni siquiera le llegan por aquí.
+	collision_mask = Echo.CAPA_ONDA_JUGADORA
 	area_entered.connect(_on_area_entered)
 	_pintar(false)
 
