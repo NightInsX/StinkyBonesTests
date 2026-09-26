@@ -13,7 +13,9 @@ func _input(event: InputEvent) -> void:
 		PauseScr.pause_game()
 
 func swap_screen_resolution(resolution):
-	if resolution: DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+	fullscreen = resolution
+	if resolution: 
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 	else: 
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 		DisplayServer.window_set_size(Vector2i(640,360))

@@ -6,20 +6,25 @@ var sure_to_exit := 0 # Takes negative value if to menu, takes positive if to ex
 func _ready() -> void:
 	hide()
 	
+	
 func pause_game():
-	# Stop music
+	MusicCtrl.pause()
+	sure_to_exit = 0
 	$ColorRect/Label2.hide()
 	show()
 	$ColorRect/HSlider.value = Global.master_volume
 	$ColorRect/CheckButton.button_pressed = Global.fullscreen
+	$ColorRect/volume.text = "Currently: " + str(Global.master_volume)
 
 
 func _on_resume_pressed() -> void:
+	MusicCtrl.restart()
 	sure_to_exit = 0
 	hide()
 
 func _on_menu_pressed() -> void:
 	if sure_to_exit == -1:
+		MusicCtrl.restart()
 		Global.overworld = false
 		get_tree().change_scene_to_file("res://scenes/MainMenu.tscn")
 		hide()
@@ -34,18 +39,11 @@ func _on_exit_pressed() -> void:
 		sure_to_exit = 1
 		$ColorRect/Label2.show()
 
-#func _input(event):
-#	if event is InputEventMouseButton and sure_to_exit != 0:
-#		sure_to_exit = 0
-#		$ColorRect/Label2.hide()
-
-
 func _on_h_slider_value_changed(value: float) -> void:
 	Global.master_volume = value # Estoupa co 0 por algun motivo
-	#$AudioStreamPlayer.volume_db = (-value+100)/2 ###### Awaiting music controller
-	if value == 0: $AudioStreamPlayer.volume_db = -1000
+	MusicCtrl.set_music_volume(value)
+	if value == 0: MusicCtrl.set_music_volume(-1000)
 	$ColorRect/volume.text = "Currently: " + str(int(value))
-	print("Inserir cambio de volume: pendente da música")
 
 
 func _on_button_pressed() -> void:

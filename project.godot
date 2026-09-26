@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 
 Global="*uid://bh8wy8wbnyie"
 PauseScr="*uid://dg4y1bo46m11g"
+MusicCtrl="*uid://p7ap0r0s2r1f"
 
 [display]
 

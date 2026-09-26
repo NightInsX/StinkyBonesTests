@@ -4,6 +4,7 @@ extends Control
 func _ready():
 	$Settings/HSlider.value = Global.master_volume
 	$Settings/CheckButton.button_pressed = Global.fullscreen
+	$Settings/volume.text = "Currently: " + str(Global.master_volume)
 
 func _on_play_pressed() -> void:
 	get_tree().change_scene_to_file("res://scenes/overworld_testing_room.tscn")
@@ -36,4 +37,3 @@ func _on_h_slider_value_changed(value: float) -> void:
 	$AudioStreamPlayer.volume_db = (-value+100)/2
 	if value == 0: $AudioStreamPlayer.volume_db = -1000
 	$Settings/volume.text = "Currently: " + str(int(value))
-	print("Inserir cambio de volume: pendente da música")
