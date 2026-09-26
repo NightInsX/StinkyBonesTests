@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b530156is5fdc" path="res://scripts/character_body_2d.gd" id="1_0e48y"]
 [ext_resource type="Texture2D" uid="uid://dj3h0rabrid5m" path="res://icon.svg" id="2_epypp"]
-[ext_resource type="Script" uid="uid://cyef8mye6q3wp" path="res://enemigo.gd" id="4_q6r6c"]
+[ext_resource type="Script" uid="uid://cyef8mye6q3wp" path="res://scripts/enemigo.gd" id="4_q6r6c"]
 [ext_resource type="Texture2D" uid="uid://m1am600blsbx" path="res://graphics/sprites/girl.png" id="5_kdubu"]
 [ext_resource type="PackedScene" path="res://scenes/mapa_dtl.tscn" id="6_mapa"]
 [ext_resource type="Script" uid="uid://derhf7g2jn2xf" path="res://scripts/mapa_colocacion.gd" id="7_colocar"]
@@ -61,6 +61,8 @@ position = Vector2(95, 100)
 scale = Vector2(0.7, 0.7)
 motion_mode = 1
 script = ExtResource("4_q6r6c")
+nodo_jugadora = NodePath("../girl")
+nodo_mapa = NodePath("../MapaDTL")
 metadata/_edit_group_ = true
 
 [node name="Sprite2D" type="Sprite2D" parent="Enemigo" unique_id=954296086]

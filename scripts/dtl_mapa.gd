@@ -193,6 +193,53 @@ func dimensiones() -> Vector2i:
 	return Vector2i(fila.size(), _rejilla.size())
 
 
+## Centro en píxeles de una celda, ya en coordenadas de mundo.
+func centro_celda(celda: Vector2i) -> Vector2:
+	return to_global(_centro_celda(celda))
+
+
+## Celda que contiene un punto del mundo.
+func celda_de(punto: Vector2) -> Vector2i:
+	var local := to_local(punto)
+	return Vector2i(int(floor(local.x / tile)), int(floor(local.y / tile)))
+
+
+## ¿La celda está en una zona ABIERTA, o sea en una sala y no en un pasillo?
+##
+## No se puede mirar el tipo de celda para esto porque el RogueLike marca igual
+## el suelo de la sala (2) y el del pasillo (4); lo único que los distingue es
+## que el pasillo siempre tiene muro al lado. Así que se mira la holgura: con
+## `holgura` >= 1 un pasillo de un tile queda descartado siempre, y una sala de
+## tres tiles o más se acepta.
+func es_sala(celda: Vector2i, holgura: int = 1) -> bool:
+	for y in range(celda.y - holgura, celda.y + holgura + 1):
+		for x in range(celda.x - holgura, celda.x + holgura + 1):
+			if not es_transitable(Vector2i(x, y)):
+				return false
+	return true
+
+
+## Celda de sala a una distancia de entre `minimo` y `radio` celdas de `desde`.
+## Vector2i(-1, -1) si en ese radio no hay ninguna, para que quien llame pueda
+## abrir el radio y no afuntar que no hay sitio.
+func celda_sala_cerca(desde: Vector2i, radio: int, minimo: int = 1,
+		holgura: int = 1) -> Vector2i:
+	var candidatas: Array[Vector2i] = []
+	for dy in range(-radio, radio + 1):
+		for dx in range(-radio, radio + 1):
+			# Distancia de Chebyshev: cuenta celdas de pasillo, no píxeles en
+			# diagonal, que es lo que importa para un mapa de rejilla.
+			var dist := maxi(absi(dx), absi(dy))
+			if dist > radio or dist < minimo:
+				continue
+			var celda := desde + Vector2i(dx, dy)
+			if es_sala(celda, holgura):
+				candidatas.append(celda)
+	if candidatas.is_empty():
+		return Vector2i(-1, -1)
+	return candidatas[randi() % candidatas.size()]
+
+
 ## Consulta real al servidor de navegación: comprueba que se puede ir de un
 ## punto transitable a otro. Devuelve true si encuentra ruta.
 func probar_navegacion(desde: Vector2, hasta: Vector2) -> bool:

@@ -10,18 +10,35 @@ const Ecolocalización = preload("res://scenes/echo.tscn")
 @export var pausa_max: float = 1.8
 @export var margen: float = 160.0  # no se acerca a los bordes del mapa
 
+@export_group("Oído")
 @export var onda_max_radius: float = 400.0
 @export var onda_duration: float = 0.7
 @export var onda_intervalo: float = 1.6  # media entre ondas y ondas
-
 @export var distancia_carga: float = 1800.0  # si la oye más cerca de esto, va a por ella
 @export var memoria_segundos: float = 8.0  # cuánto recuerda dónde la oyó
+@export var radio_busqueda: int = 5  # celdas que barre alrededor del punto oído
 
-@export var atascado_max: float = 0.4  # segundos empujando contra un muro antes de rodearlo
-@export var desatasque_tiempo: float = 0.9  # segundos que dura la decision de bordear el muro
-@export var paso_rodeo: float = 90.0  # hasta donde prueba un rodeo antes de rendirse
+@export_group("Desatasco")
+## Segundos sin avanzar de verdad antes de buscar salida. Antes sólo miraba si
+## chocaba en ESTE frame, y eso no distingue entre rozar una esquina y estar
+## empotrado en un pasillo, así que disparaba el rodeo antes de tiempo.
+@export var sin_avance_max: float = 1.2
+@export var desatasque_tiempo: float = 0.9  # segundos que dura la decision de bordear
+@export var paso_rodeo: float = 200.0  # hasta donde prueba un rodeo antes de rendirse
 @export var ajuste_malla: float = 40.0  # margen para aceptar un punto casi fuera de la malla
 @export var capas_muro: int = 1  # capas de física que cuentan como muro infranqueable
+
+@export_group("Aparición cada X tiempo")
+## Cada estos segundos el enemigo reaparece en una sala cerca de la jugadora, para
+## que la partida no se eternice con el enemigo perdido en la otra punta del mapa.
+## Ponerlo a 0 lo desactiva.
+@export var intervalo_caceria: float = 300.0
+@export var radio_caceria: int = 7  # celdas: radio de aparición alrededor de ella
+@export var radio_caceria_min: int = 3  # para no salir encima de sus pies
+
+@export_group("Referencias")
+@export var nodo_jugadora: NodePath = ^"../girl"
+@export var nodo_mapa: NodePath = ^"../MapaDTL"
 
 @onready var _oido: Area2D = $Oido
 @onready var _agente: NavigationAgent2D = $Agente
@@ -41,25 +58,44 @@ var _meta: Vector2 = Vector2.ZERO  # a dónde va ahora mismo, sea carga o paseo
 var _bloqueado: bool = false  # este frame ha chocado con un muro de frente
 var _borde: Vector2 = Vector2.ZERO  # lado del muro que se decide a bordear
 var _borde_t: float = 0.0
-var _radio: float = 32.0  # medio ancho del cuerpo, para no apuntar a muros
-var _sonda: CircleShape2D
+var _radio: float = 32.0  # paso de muestreo al medir el cuerpo
+var _sonda: Shape2D
 var _espacio: PhysicsDirectSpaceState2D
 
+# Desatasco en tres escalones: primero rodea el muro, luego retrocede por donde
+# ha venido y, si tampoco, se va a cualquier sitio alcanzable a nearby. Con un
+# solo escalón se quedaba encallado: el rodeo lo devolvía al mismo punto y
+# vuelta a empezar.
+var _nivel_atasco: int = 0
+var _sin_avance: float = 0.0
+var _fuga: Vector2 = Vector2.ZERO
+var _fuga_t: float = 0.0
+
+# ¿Está barriendo la zona donde la oyó en vez de yendo a por ella?
+var _barriendo: bool = false
+var _destino_barrido: Vector2 = Vector2.ZERO
+
+var _caceria: float = 0.0
+var _jugadora: Node2D = null
+var _mapa: DTLMapa = null
+
 # Direcciones que se prueban como rodeo, de menos a más apartada del objetivo.
-const _RODEOS := [0.0, 0.4, -0.4, 0.8, -0.8, 1.2, -1.2, 1.6, -1.6, PI]
+const _RODEOS := [0.0, 0.4, -0.4, 0.8, -0.8, 1.2, -1.2, 1.6, -1.6, 2.0, -2.0, PI]
 
 
 func _ready() -> void:
 	_radio = _medio_cuerpo()
-	_sonda = CircleShape2D.new()
-	_sonda.radius = _radio
+	_preparar_sonda()
 	_pos_previa = global_position
 	# Que no dispare en el mismo instante que la Girl, para no solaparse.
 	_espera_onda = randf_range(0.4, onda_intervalo)
+	_jugadora = get_node_or_null(nodo_jugadora) as Node2D
+	_mapa = get_node_or_null(nodo_mapa) as DTLMapa
+	_caceria = intervalo_caceria
 	# Oye las ondas de la Girl; las suyas van en otra capa, así que no se
 	# oye a sí mismo.
 	if _oido == null:
-		push_warning("enemigo.gd: falta el Area2D hijo 'Oido', no oirá a la Girl")
+		push_warning("scripts/enemigo.gd: falta el Area2D hijo 'Oido', no oirá a la Girl")
 	else:
 		_oido.collision_mask = Echo.CAPA_ONDA_JUGADORA
 		_oido.area_entered.connect(_on_onda_entrada)
@@ -75,6 +111,8 @@ func _physics_process(delta: float) -> void:
 	_gastar_memoria(delta)
 	_moverse(delta)
 	_lanzar_onda(delta)
+	_contar_caceria(delta)
+
 
 
 func _on_onda_entrada(area: Area2D) -> void:
@@ -111,9 +149,25 @@ func _cargando() -> bool:
 func _moverse(delta: float) -> void:
 	# Cargar tiene prioridad: si no, el enemigo se pasea sin enterarse.
 	if _cargando():
-		_ir_a(_ultima_onda_pos, delta)
+		if global_position.distance_to(_ultima_onda_pos) > llegada:
+			_barriendo = false
+			_ir_a(_ultima_onda_pos, delta)
+			return
+		# Ha llegado a donde la oyó, pero aún lo recuerda. Antes se paraba ahí
+		# clavado hasta que se le olvidaba, y con la carga teniendo prioridad
+		# no volvía a moverse: eran 8 s de parón a la vista de la jugadora.
+		# Ahora barre la zona, que es donde más opciones tiene de oírla otra vez.
+		if not _barriendo:
+			_barriendo = true
+			_destino_barrido = _punto_cerca(_ultima_onda_pos, radio_busqueda)
+		if global_position.distance_to(_destino_barrido) <= llegada:
+			_destino_barrido = _punto_cerca(_ultima_onda_pos, radio_busqueda)
+			_frenar(delta)
+			return
+		_ir_a(_destino_barrido, delta)
 		return
 
+	_barriendo = false
 	# Está esperando entre destinos: frena hasta quedarse quieto.
 	if _pausa > 0.0:
 		_pausa -= delta
@@ -133,8 +187,11 @@ func _moverse(delta: float) -> void:
 func _ir_a(punto: Vector2, delta: float) -> void:
 	_meta = punto
 	_borde_t = maxf(_borde_t - delta, 0.0)
+	_fuga_t = maxf(_fuga_t - delta, 0.0)
 
-	var siguiente := _destino_libre(_waypoint(_meta))
+	# Mientras huye ignora la ruta: viene de ahí, así que se conoce libre, y
+	# ninguna ruta va a sacarlo de un sitio donde la ruta ya lo ha metido.
+	var siguiente := _fuga if _fuga_t > 0.0 else _destino_libre(_waypoint(_meta))
 	var deseada := (siguiente - global_position)
 	if deseada.length_squared() > 0.0001:
 		deseada = deseada.normalized() * velocidad_max
@@ -236,6 +293,26 @@ func _cuerpo_libre(punto: Vector2) -> bool:
 	return _espacio.intersect_shape(consulta, 1).is_empty()
 
 
+# La sonda tiene que ser la FORMA REAL del cuerpo, no un círculo con su medio
+# ancho. El cuerpo es un cuadrado de 92x92: 46 px de semilado en los ejes y 65
+# en las diagonales. Midiendo con un círculo de 32 px, la sonda daba el visto
+# bueno a esquiños por los que el cuadrado no cabe: el enemigo se metía, se
+# encallaba, y el rodeo lo devolvía al mismo sitio una y otra vez. Ése era el
+# bucle de "atascado" que se veía en consola.
+func _preparar_sonda() -> void:
+	var original := _cuerpo.shape
+	if original == null:
+		_sonda = CircleShape2D.new()
+		_sonda.radius = _radio
+		return
+	_sonda = original.duplicate() as Shape2D
+	var s := maxf(global_scale.x, global_scale.y)
+	if _sonda is RectangleShape2D:
+		(_sonda as RectangleShape2D).size *= s
+	elif _sonda is CircleShape2D:
+		(_sonda as CircleShape2D).radius *= s
+
+
 # Proyecta el punto sobre la malla. Devuelve Vector2.INF si no hay malla a tiro.
 func _en_malla(punto: Vector2) -> Vector2:
 	if _agente == null:
@@ -278,44 +355,97 @@ func _recordar_bloqueo() -> void:
 		return
 
 
-# Cuando el enemigo lleva un rato sin avanzar contra un muro, hay que buscar
-# salida. Antes solo cambiaba la meta de paseo, y como la carga tiene prioridad
-# en _moverse, persiguiendo no hacía nada: se quedaba prensado los 3.5 s que
-# duraba la memoria, y volvía a hacerlo con la siguiente onda. Ahora el rodeo se
-# decide aparte de la meta, así que también sirve cargando.
+# Cuando el enemigo lleva un rato sin avanzar de verdad, hay que buscar salida.
+# Antes sólo miraba si chocaba en ESTE frame, y como el waypoint cambia cada
+# frame eso no distinguía entre rozar una esquina y estar empotrado, así que el
+# rodeo saltaba antes de tiempo y se quedaba con la meta imposible. Ahora se
+# mide avance real sobre una ventana de `sin_avance_max` segundos y la salida se
+# escala en tres escalones, porque bordear un muro sólo funciona si el rodeo
+# acaba pasando por un hueco: si no, hay que deshacer el camino hecho.
 func _vigilar_atasco(delta: float) -> void:
 	var avanzando := global_position.distance_to(_pos_previa) > velocidad_max * delta * 0.5
 	_pos_previa = global_position
 
 	if _bloqueado or (not avanzando and not _en_el_final_de_la_ruta()):
 		_atascado += delta
+		_sin_avance += delta
 	else:
 		_atascado = 0.0
+		_sin_avance = 0.0
+		_nivel_atasco = 0
 
-	if _atascado < atascado_max:
+	if _sin_avance < sin_avance_max:
 		return
+	_sin_avance = 0.0
 	_atascado = 0.0
 	_desatascar()
 
 
 func _desatascar() -> void:
-	# Se elige el lado del muro por el que rodear, el que más se acerca a la
-	# meta, y se mantiene esa preferencia un rato para no dublar entre los dos
-	# lados frame a frame.
-	_borde = Vector2.ZERO
+	_nivel_atasco += 1
+	match _nivel_atasco:
+		1:
+			_rodear_muro()
+		2:
+			_retroceder()
+		_:
+			_esquivar()
+
+
+# Primer escalón: elegir el lado del muro por el que rodear, el que más se
+# acerca a la meta, y mantener esa preferencia un rato para no dublar entre los
+# dos lados frame a frame.
+func _rodear_muro() -> void:
+	_borde = _dir_bloqueo().orthogonal().normalized()
+	if _borde.dot(_meta - global_position) < 0.0:
+		_borde = -_borde
+	if _borde == Vector2.ZERO:
+		_borde = Vector2.from_angle(randf() * TAU)
+	_borde_t = desatasque_tiempo
+	print("[enemigo] encallado en ", global_position, ", bordea por ", _borde)
+
+
+# Segundo escalón: deshacer el camino. Si lleva un rato sin avanzar es que la
+# dirección que tomaba era mala, así que va para atrás, que es terreno que ya
+# ha recorrido y por tanto libre.
+func _retroceder() -> void:
+	var dir := _dir_bloqueo()
+	if dir == Vector2.ZERO:
+		dir = (global_position - _meta).normalized()
+	if dir == Vector2.ZERO:
+		dir = Vector2.from_angle(randf() * TAU)
+	_fuga = _en_malla_o_si(global_position - dir * paso_rodeo, global_position)
+	_fuga_t = desatasque_tiempo
+	print("[enemigo] no sale, retrocede a ", _fuga)
+
+
+# Último escalón: se rinde con la dirección actual y se va a cualquier sitio
+# alcanzable cerca. Si tampoco así se mueve, es que ya no hay destino posible y
+# lo único que queda es olvidarse de la pista y volver a estudiar el mapa.
+func _esquivar() -> void:
+	_nivel_atasco = 0
+	var meta := _punto_cerca(global_position, 4)
+	if meta.distance_to(global_position) < 1.0:
+		_memoria = 0.0
+		_destino = _punto_aleatorio()
+		print("[enemigo] atascado de verdad, abandona la pista")
+		return
+	_fuga = meta
+	_fuga_t = desatasque_tiempo
+	print("[enemigo] se desvía a ", meta)
+
+
+# Dirección de salida del muro que tiene delante, o Vector2.ZERO si no hay
+# ninguno. Se usa tanto para elegir el lado del rodeo como para retroceder.
+func _dir_bloqueo() -> Vector2:
 	for i in get_slide_collision_count():
 		var col := get_slide_collision(i)
 		if not (col.get_collider() is StaticBody2D):
 			continue
-		var lado := col.get_normal().orthogonal().normalized()
-		if lado.dot(_meta - global_position) < 0.0:
-			lado = -lado
-		_borde = lado
-		break
-	if _borde == Vector2.ZERO:
-		_borde = Vector2.from_angle(randf() * TAU)
-	_borde_t = desatasque_tiempo
-	print("[enemigo] atascado en ", global_position, ", bordea por el lado ", _borde)
+		if col.get_normal().dot(velocity) >= 0.0:
+			continue
+		return col.get_normal()
+	return Vector2.ZERO
 
 
 # Si ya está en el final de la ruta es que la meta cae donde no se puede
@@ -353,11 +483,103 @@ func _lanzar_onda(delta: float) -> void:
 	print("[enemigo] onda lanzada en ", wave.global_position, " radio=", wave.max_radius)
 
 
+# ---------------------------------------------------------------- apariciones
+
+# Cada `intervalo_caceria` segundos el enemigo reaparece cerca de la jugadora.
+# Es la red de seguridad de la partida: por muy bien que vaya el hide and seek,
+# a los 5 minutos tiene que haber siempre un enfrentamiento, o si no se
+# convierte en un paseo por un mapa vacío.
+func _contar_caceria(delta: float) -> void:
+	if intervalo_caceria <= 0.0:
+		return
+	_caceria -= delta
+	if _caceria > 0.0:
+		return
+	_caceria = intervalo_caceria
+	_cazar()
+
+
+func _cazar() -> void:
+	if _jugadora == null or _mapa == null:
+		return
+	var celda := _celda_sala_cerca(_jugadora.global_position)
+	if celda.x < 0:
+		push_warning("scripts/enemigo.gd: no hay ninguna sala donde aparecer.")
+		return
+	_aparecer(_mapa.centro_celda(celda))
+
+
+# Busca una celda donde aparecer alrededor de la jugadora. Se va aflojando una
+# condición cada ronda, en este orden, porque la aparición tiene que ser SIEMPRE:
+#
+#   1) sala de verdad, a un radio cómodo
+#   2) sala de verdad, radio doble y sin exigir distancia
+#   3) sala de verdad, en todo el mapa
+#   4) cualquier celda transitable, por si el mapa no tiene ni una sala de 3x3
+#
+# Un pasillo de un tile no tiene ni 3x3 libres alrededor, así que el punto 4 sólo
+# se da en mapas laberínticos, pero en ese caso mejor eso que no aparecer.
+func _celda_sala_cerca(centro: Vector2) -> Vector2i:
+	var base := _mapa.celda_de(centro)
+	var limite := maxi(_mapa.dimensiones().x, _mapa.dimensiones().y)
+	var radio := clampi(radio_caceria, 2, maxi(limite, 2))
+	var minimo := clampi(radio_caceria_min, 0, radio - 1)
+
+	var celda := _mapa.celda_sala_cerca(base, radio, minimo, 1)
+	if celda.x >= 0:
+		return celda
+
+	# Radio doble, pero ya sin exigirle que esté lejos.
+	celda = _mapa.celda_sala_cerca(base, mini(radio * 2, limite), 0, 1)
+	if celda.x >= 0:
+		return celda
+
+	# Toda la superficie del mapa.
+	celda = _mapa.celda_sala_cerca(base, limite, 0, 1)
+	if celda.x >= 0:
+		return celda
+
+	return _mapa.celda_sala_cerca(base, limite, 0, 0)
+
+
+# Teletransporte a una celda de sala. Se limpia todo el estado de atasco porque
+# la posición cambia de golpe, y se le da la posición de la jugadora como si la
+# hubiera oído: para eso aparece tan cerca.
+func _aparecer(destino: Vector2) -> void:
+	global_position = destino
+	velocity = Vector2.ZERO
+	_atascado = 0.0
+	_sin_avance = 0.0
+	_nivel_atasco = 0
+	_fuga_t = 0.0
+	_barriendo = false
+	_pausa = 0.0
+	_destino = destino
+	_destino_barrido = destino
+	if _jugadora != null:
+		_ultima_onda_pos = _jugadora.global_position
+	_memoria = memoria_segundos
+	print("[enemigo] CACERÍA: aparece en ", destino,
+			" a ", int(global_position.distance_to(_jugadora.global_position)), " px de la Girl")
+
+
+# ---------------------------------------------------------------- puntos
+
 # La meta se sortea dentro de la pantalla, pero el pasillo está excavado en la
 # malla y los sorteos caen dentro de los muros. Se proyecta cada intento sobre
 # la malla y se descarta el que acabe dentro de un muro.
 func _punto_aleatorio() -> Vector2:
-	var area := get_viewport_rect().grow(-margen)
+	return _punto_en(get_viewport_rect().grow(-margen))
+
+
+# Punto alcanzable y libre a `celdas` celdas de `centro`, para barrer la zona
+# donde se oyó algo o para salir de un atasco.
+func _punto_cerca(centro: Vector2, celdas: int) -> Vector2:
+	var lado := float(celdas) * _lado_celda()
+	return _punto_en(Rect2(centro - Vector2(lado, lado), Vector2(lado, lado) * 2.0))
+
+
+func _punto_en(area: Rect2) -> Vector2:
 	for intento in 24:
 		var cand := Vector2(
 			randf_range(area.position.x, area.end.x),
@@ -372,7 +594,20 @@ func _punto_aleatorio() -> Vector2:
 	return global_position
 
 
-# Medio ancho del cuerpo: lo que hay que dejar de margen respecto a los muros.
+# Proyecta sobre la malla y, si el punto cae fuera, se queda con el de partida.
+# Para los puntos de huida: mejor un sitio en la malla que uno en un muro.
+func _en_malla_o_si(punto: Vector2, respaldo: Vector2) -> Vector2:
+	var en_malla := _en_malla(punto)
+	return respaldo if not en_malla.is_finite() else en_malla
+
+
+# Lado de una celda del mapa, para poder hablar en celdas sin acoplar el
+# enemigo al valor concreto de `tile`.
+func _lado_celda() -> float:
+	return float(_mapa.tile) if _mapa != null else 128.0
+
+
+# Medio ancho del cuerpo: sólo se usa como paso de muestreo al medir si cabe.
 # Se mide la forma YA escalada, porque el nodo tiene scale 0.7 para que quepa
 # por los pasillos de un tile: sin esto, la sonda mediría el cuerpo en grande y
 # el enemigo se negaría a meterse por los pasillos que sí caben.
