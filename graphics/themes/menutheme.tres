@@ -1,0 +1,7 @@
+[gd_resource type="Theme" format=3 uid="uid://d27b4w6eanc0f"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8lupt"]
+
+[resource]
+Button/font_sizes/font_size = 16
+Button/styles/normal = SubResource("StyleBoxFlat_8lupt")
