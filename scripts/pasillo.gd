@@ -1,6 +1,9 @@
 extends Area2D
 
 #este pasillo es el que detecta que la onda le llegua y que el personaje no esta muy lejos
+#
+# Este Area2D es solo el "oído": un Area2D no empuja a nadie. Lo que bloquea
+# al personaje y al enemigo son los MuroSup / MuroInf, que son StaticBody2D.
 
 
 @export var umbral : float = 0.35	#umbral para que no detecte la onda muy lejos

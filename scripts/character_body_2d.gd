@@ -4,8 +4,8 @@ extends CharacterBody2D
 const SPEED = 250.0
 const Ecolocalización = preload("res://scenes/echo.tscn")
 
-@export var wave_max_radius: float = 500.0
-@export var wave_duration: float = 0.6
+@export var wave_max_radius: float = 1400.0
+@export var wave_duration: float = 0.9
 @export var wave_cooldown: float = 0.5  # evita spamear el botón
 
 var cooldown := Timer.new()

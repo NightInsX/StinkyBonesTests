@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" uid="uid://sfjdhblysxqw" path="res://scripts/dtl_mapa.gd" id="1_mapa"]
+
+[node name="MapaDTL" type="Node2D"]
+script = ExtResource("1_mapa")
+generador = 0
+ancho = 25
+alto = 25
+semilla_aleatoria = true
+tile = 128
+room_min = Vector2i(3, 3)
+room_max = Vector2i(6, 5)
