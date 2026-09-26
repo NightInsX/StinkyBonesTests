@@ -8,6 +8,7 @@ func _ready() -> void:
 	
 func pause_game():
 	# Stop music
+	$ColorRect/Label2.hide()
 	show()
 	$ColorRect/HSlider.value = Global.master_volume
 	$ColorRect/CheckButton.button_pressed = Global.fullscreen
