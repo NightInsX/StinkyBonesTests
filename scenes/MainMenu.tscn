@@ -137,7 +137,7 @@ tracks/0/keys = {
 
 [sub_resource type="Animation" id="Animation_mipys"]
 resource_name = "to_settings"
-length = 1.5
+length = 1.6
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
@@ -145,7 +145,7 @@ tracks/0/path = NodePath("TitleScreen:position")
 tracks/0/interp = 2
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 1.5),
+"times": PackedFloat32Array(0, 1.6),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [Vector2(0, 0), Vector2(-640, 0)]
@@ -157,7 +157,7 @@ tracks/1/path = NodePath("Settings:position")
 tracks/1/interp = 2
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0, 1.5),
+"times": PackedFloat32Array(0, 1.6),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [Vector2(640, 0), Vector2(0, 0)]
@@ -339,9 +339,13 @@ theme_override_styles/panel = SubResource("StyleBoxEmpty_8lupt")
 libraries/ = SubResource("AnimationLibrary_826wr")
 autoplay = &"ready"
 
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=753173397]
+
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Play" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Settings" to="." method="_on_settings_pressed"]
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Exit" to="." method="_on_exit_pressed"]
 [connection signal="pressed" from="Settings/Button" to="." method="_toggle_fullscreen"]
+[connection signal="drag_ended" from="Settings/HSlider" to="." method="_on_h_slider_drag_ended"]
+[connection signal="value_changed" from="Settings/HSlider" to="." method="_on_h_slider_value_changed"]
 [connection signal="pressed" from="Settings/Button2" to="." method="_on_exiting_settings"]
 [connection signal="animation_finished" from="Animations" to="." method="_on_animations_animation_finished"]

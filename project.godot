@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Global="*uid://bh8wy8wbnyie"
+PauseScr="*uid://dg4y1bo46m11g"
 
 [display]
 
@@ -28,6 +29,7 @@ window/size/resizable=false
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 mouse_cursor/custom_image="uid://culh7evcdoic6"
+mouse_cursor/custom_image_hotspot=Vector2(15, 15)
 
 [dotnet]
 

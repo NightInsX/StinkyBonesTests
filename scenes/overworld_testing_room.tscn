@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://bbbbb1f2d0g38"]
+
+[ext_resource type="Script" uid="uid://pfkvwgc7e0rj" path="res://scripts/overworld_testing_room.gd" id="1_pomdm"]
+
+[node name="OverworldTestingRoom" type="Node2D" unique_id=76600026]
+script = ExtResource("1_pomdm")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=20182372]
+offset_right = 640.0
+offset_bottom = 360.0
+color = Color(0.9730416, 0.6343034, 0.7959823, 1)

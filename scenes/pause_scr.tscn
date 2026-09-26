@@ -1,0 +1,127 @@
+[gd_scene format=3 uid="uid://dg4y1bo46m11g"]
+
+[ext_resource type="Script" uid="uid://4w54h8r10rc2" path="res://scripts/pause_scr.gd" id="1_dvh6y"]
+
+[node name="PauseScr" type="CanvasLayer" unique_id=241173845]
+script = ExtResource("1_dvh6y")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1450684394]
+z_index = 5
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.47058824)
+
+[node name="Label" type="Label" parent="ColorRect" unique_id=1366786521]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -64.0
+offset_top = -116.0
+offset_right = 64.0
+offset_bottom = -85.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "PAUSED"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label2" type="Label" parent="ColorRect" unique_id=1041934142]
+visible = false
+modulate = Color(1, 0.19, 0.19, 1)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -64.0
+offset_top = 84.0
+offset_right = 64.0
+offset_bottom = 115.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Are you sure?"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ColorRect" unique_id=1628638321]
+layout_mode = 0
+offset_left = 256.0
+offset_top = 128.0
+offset_right = 384.0
+offset_bottom = 256.0
+metadata/_edit_group_ = true
+
+[node name="Resume" type="Button" parent="ColorRect/VBoxContainer" unique_id=1229797177]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Resume"
+
+[node name="Menu" type="Button" parent="ColorRect/VBoxContainer" unique_id=656830358]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Main menu"
+
+[node name="Exit" type="Button" parent="ColorRect/VBoxContainer" unique_id=835028496]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Exit"
+
+[node name="CheckButton" type="CheckButton" parent="ColorRect" unique_id=1619939248]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 152.0
+offset_right = 492.0
+offset_bottom = 184.0
+
+[node name="Button" type="Button" parent="ColorRect" unique_id=1016830786]
+layout_mode = 0
+offset_left = 488.0
+offset_top = 152.0
+offset_right = 576.0
+offset_bottom = 184.0
+text = "Apply"
+
+[node name="Label4" type="Label" parent="ColorRect" unique_id=1945895781]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 120.0
+offset_right = 576.0
+offset_bottom = 143.0
+text = "Fullscreen mode"
+
+[node name="HSlider" type="HSlider" parent="ColorRect" unique_id=19482907]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 208.0
+offset_right = 576.0
+offset_bottom = 256.0
+
+[node name="Label5" type="Label" parent="ColorRect" unique_id=1245599501]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 200.0
+offset_right = 576.0
+offset_bottom = 223.0
+text = "Master volume"
+
+[node name="volume" type="Label" parent="ColorRect" unique_id=13217705]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 248.0
+offset_right = 576.0
+offset_bottom = 271.0
+text = "Currently: "
+
+[connection signal="pressed" from="ColorRect/VBoxContainer/Resume" to="." method="_on_resume_pressed"]
+[connection signal="pressed" from="ColorRect/VBoxContainer/Menu" to="." method="_on_menu_pressed"]
+[connection signal="pressed" from="ColorRect/VBoxContainer/Exit" to="." method="_on_exit_pressed"]
+[connection signal="pressed" from="ColorRect/Button" to="." method="_on_button_pressed"]
+[connection signal="value_changed" from="ColorRect/HSlider" to="." method="_on_h_slider_value_changed"]
