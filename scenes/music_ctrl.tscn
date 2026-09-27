@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://p7ap0r0s2r1f"]
+
+[ext_resource type="Script" uid="uid://n5k4y5nh1f2h" path="res://scripts/music_ctrl.gd" id="1_q5iyn"]
+
+[node name="MusicCtrl" type="CanvasLayer" unique_id=1175251236]
+visible = false
+script = ExtResource("1_q5iyn")
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=792166390]

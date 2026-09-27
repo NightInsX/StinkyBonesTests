@@ -1,0 +1,61 @@
+[gd_scene format=3 uid="uid://d00krikv8s4l3"]
+
+[ext_resource type="Script" uid="uid://dlhsb2gyoratr" path="res://scripts/introsplash.gd" id="1_7cvqm"]
+[ext_resource type="Texture2D" uid="uid://dj3h0rabrid5m" path="res://icon.svg" id="1_lsplx"]
+
+[sub_resource type="Animation" id="Animation_exiaa"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_ah18k"]
+resource_name = "new_animation"
+length = 3.0000000000000004
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.49, 0.75, 2.25, 2.5),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 0), Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_jfejf"]
+_data = {
+&"RESET": SubResource("Animation_exiaa"),
+&"new_animation": SubResource("Animation_ah18k")
+}
+
+[node name="introsplash" type="Control" unique_id=1618990109]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7cvqm")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=470362412]
+modulate = Color(1, 1, 1, 0)
+position = Vector2(320, 176)
+texture = ExtResource("1_lsplx")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=707206162]
+libraries/ = SubResource("AnimationLibrary_jfejf")
+autoplay = &"new_animation"
+
+[connection signal="animation_finished" from="AnimationPlayer" to="." method="_on_animation_player_animation_finished"]

@@ -1,7 +1,45 @@
 [gd_resource type="Theme" format=3 uid="uid://d27b4w6eanc0f"]
 
+<<<<<<< HEAD
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8lupt"]
 
 [resource]
 Button/font_sizes/font_size = 16
 Button/styles/normal = SubResource("StyleBoxFlat_8lupt")
+=======
+[ext_resource type="Texture2D" uid="uid://bj5u5o30ejx7d" path="res://graphics/resources/wooden_button1.png" id="1_jeqjc"]
+[ext_resource type="FontFile" uid="uid://snma332gj2q0" path="res://graphics/themes/GrapeSoda.ttf" id="1_yj64y"]
+[ext_resource type="Texture2D" uid="uid://bx4u2gyhktdp2" path="res://graphics/resources/wooden_button2.png" id="2_slbfi"]
+[ext_resource type="Texture2D" uid="uid://bvh0ljjjemu5n" path="res://graphics/resources/checkbutton2.png" id="3_ahchu"]
+[ext_resource type="Texture2D" uid="uid://5m3u4n2v32am" path="res://graphics/resources/checkbutton1.png" id="4_xn6hp"]
+[ext_resource type="Texture2D" uid="uid://cjs23mh36ofn4" path="res://graphics/resources/wooden_slider1.png" id="5_yj64y"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_a3dfe"]
+texture = ExtResource("1_jeqjc")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_kqlh1"]
+texture = ExtResource("1_jeqjc")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_hqobg"]
+texture = ExtResource("1_jeqjc")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_j2xqb"]
+texture = ExtResource("2_slbfi")
+
+[resource]
+Button/colors/font_color = Color(0.8, 0.8, 0.8, 1)
+Button/colors/font_focus_color = Color(1, 1, 1, 1)
+Button/colors/font_hover_color = Color(1, 1, 1, 1)
+Button/font_sizes/font_size = 24
+Button/fonts/font = ExtResource("1_yj64y")
+Button/styles/focus = SubResource("StyleBoxTexture_a3dfe")
+Button/styles/hover = SubResource("StyleBoxTexture_kqlh1")
+Button/styles/normal = SubResource("StyleBoxTexture_hqobg")
+Button/styles/pressed = SubResource("StyleBoxTexture_j2xqb")
+CheckButton/icons/checked = ExtResource("3_ahchu")
+CheckButton/icons/unchecked = ExtResource("4_xn6hp")
+HSlider/icons/grabber = ExtResource("5_yj64y")
+HSlider/icons/grabber_highlight = ExtResource("5_yj64y")
+Label/font_sizes/font_size = 24
+Label/fonts/font = ExtResource("1_yj64y")
+>>>>>>> Experimental_frontend
