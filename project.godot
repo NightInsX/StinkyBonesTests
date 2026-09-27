@@ -11,14 +11,26 @@ config_version=5
 [application]
 
 config/name="ProxectoEco"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="uid://d00krikv8s4l3"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
+[autoload]
+
+Global="*uid://bh8wy8wbnyie"
+PauseScr="*uid://dg4y1bo46m11g"
+MusicCtrl="*uid://p7ap0r0s2r1f"
+
 [display]
 
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/initial_position_type=4
+window/size/resizable=false
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+mouse_cursor/custom_image="uid://culh7evcdoic6"
+mouse_cursor/custom_image_hotspot=Vector2(15, 15)
 
 [dotnet]
 
@@ -59,10 +71,10 @@ Accion={
 
 [layer_names]
 
-2d_physics/layer_1="Personajes"
-2d_physics/layer_2="Onda jugadora"
-2d_physics/layer_3="Onda enemiga"
-2d_physics/layer_4="Muros"
+2d_physics/layer_1="Characters"
+2d_physics/layer_2="Player wave"
+2d_physics/layer_3="Enemy wave"
+2d_physics/layer_4="Walls"
 
 [physics]
 
@@ -70,6 +82,8 @@ Accion={
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 rendering_device/driver.windows="d3d12"
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)
