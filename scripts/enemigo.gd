@@ -45,7 +45,7 @@ const GRUPO := &"enemigo"
 ## Cada estos segundos el enemigo reaparece en una sala cerca de la jugadora, para
 ## que la partida no se eternice con el enemigo perdido en la otra punta del mapa.
 ## Ponerlo a 0 lo desactiva.
-@export var intervalo_caceria: float = 300.0
+@export var intervalo_caceria: float = 45.0
 @export var radio_caceria: int = 7  # celdas: radio de aparición alrededor de ella
 @export var radio_caceria_min: int = 3  # para no salir encima de sus pies
 
