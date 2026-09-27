@@ -14,6 +14,11 @@ extends Node
 @export var celda_preferida := Vector2i(-1, -1)
 ## Separa a los nodos entre sí para que no aparezcan apilados en la misma celda.
 @export var separacion: float = 96.0
+## Distancia mínima dura, en celdas, entre nodos colocados. A diferencia de
+## `separacion`, que es una preferencia que se puede incumplir, ésta no: si un
+## nodo acabaría a menos celdas que éstas de otro, su celda se descarta, así la
+## partida no puede empezar con el enemigo encima de la jugadora.
+@export var celdas_minimas: int = 4
 ## Cuántas celdas libres alrededor se consideran sitio de sobra. Se busca con
 ## este margen y, si no hay ninguna celda que lo cumpla, se afloja.
 @export var holgura: int = 2
@@ -55,19 +60,30 @@ func _ready() -> void:
 ## Celda donde colocar el nodo: la transitable más cercana a la preferencia y con
 ## el mayor hueco alrededor. Se pide la holgura exportada, pero si el mapa es
 ## tan de pasillos que no la cumple en ninguna parte, se va bajando hasta 0: es
-# mejor rozar un muro que aparecer dentro de él.
+## mejor rozar un muro que aparecer dentro de él.
+##
+## Primero se exige `celdas_minimas` de separación con los ya colocados. Sólo si
+## el mapa es tan pequeño que no hay ninguna celda a esa distancia, se repite la
+## búsqueda sin esa exigencia: mejor algo más pegada que no colocar el nodo.
 func _sitio(mapa: DTLMapa, region: Dictionary, ocupadas: Array[Vector2]) -> Vector2i:
 	for margen in range(maxi(holgura, 0), -1, -1):
-		var celda := _mejor_celda(mapa, region, margen, ocupadas)
+		var celda := _mejor_celda(mapa, region, margen, ocupadas, celdas_minimas)
 		if celda.x >= 0:
 			return celda
+	if not ocupadas.is_empty() and celdas_minimas > 0:
+		push_warning("MapaColocacion: no hay sitio a %d celdas; se relaja." % celdas_minimas)
+		for margen in range(maxi(holgura, 0), -1, -1):
+			var celda_relajada := _mejor_celda(mapa, region, margen, ocupadas, 0)
+			if celda_relajada.x >= 0:
+				return celda_relajada
 	return Vector2i(-1, -1)
 
 
 ## Celda transitable más cercana a la preferencia, sin pisar las ya ocupadas y
-## con `margen` celdas libres alrededor.
+## con `margen` celdas libres alrededor. Las ocupadas tienen que estar a al menos
+## `min_celdas` celdas (distancia de Chebyshev) si `min_celdas` es positivo.
 func _mejor_celda(mapa: DTLMapa, region: Dictionary, margen: int,
-		ocupadas: Array[Vector2]) -> Vector2i:
+		ocupadas: Array[Vector2], min_celdas: int = 0) -> Vector2i:
 	var d := mapa.dimensiones()
 	if d == Vector2i.ZERO:
 		return Vector2i(-1, -1)
@@ -77,6 +93,11 @@ func _mejor_celda(mapa: DTLMapa, region: Dictionary, margen: int,
 	base.x = clampi(base.x, 0, d.x - 1)
 	base.y = clampi(base.y, 0, d.y - 1)
 
+	var celdas_ocupadas: Array[Vector2i] = []
+	if min_celdas > 0:
+		for ocupada in ocupadas:
+			celdas_ocupadas.append(mapa.celda_de(ocupada))
+
 	var mejor := Vector2i(-1, -1)
 	var mejor_puntuacion := INF
 	for y in range(d.y):
@@ -85,6 +106,8 @@ func _mejor_celda(mapa: DTLMapa, region: Dictionary, margen: int,
 			if not region.is_empty() and not region.has(celda_id):
 				continue
 			if not _libre_alrededor(mapa, celda_id, margen):
+				continue
+			if _cerca_de(celda_id, celdas_ocupadas, min_celdas):
 				continue
 			var celda := Vector2(x * mapa.tile + mapa.tile * 0.5, y * mapa.tile + mapa.tile * 0.5)
 			# Cuanto más lejos del punto pedido, peor. Y estar encima de otro
@@ -107,6 +130,18 @@ func _libre_alrededor(mapa: DTLMapa, celda: Vector2i, margen: int) -> bool:
 			if not mapa.es_transitable(Vector2i(x, y)):
 				return false
 	return true
+
+
+## ¿La celda está a menos de `min_celdas` de alguna de las ocupadas? Se usa la
+## distancia de Chebyshev, la misma que cuenta celdas de pasillo en la malla.
+func _cerca_de(celda: Vector2i, ocupadas: Array[Vector2i], min_celdas: int) -> bool:
+	if min_celdas <= 0:
+		return false
+	for ocupada in ocupadas:
+		var dist := maxi(absi(celda.x - ocupada.x), absi(celda.y - ocupada.y))
+		if dist < min_celdas:
+			return true
+	return false
 
 
 ## Conjunto de celdas de la componente transitable más grande. Vacío si el mapa

@@ -47,7 +47,12 @@ const GRUPO := &"enemigo"
 ## Ponerlo a 0 lo desactiva.
 @export var intervalo_caceria: float = 300.0
 @export var radio_caceria: int = 7  # celdas: radio de aparición alrededor de ella
-@export var radio_caceria_min: int = 3  # para no salir encima de sus pies
+## Celdas mínimas (distancia de Chebyshev) que tienen que separarle de la
+## jugadora al aparecer. Es innegociable: se exige en TODAS las rondas de
+## búsqueda, y si no hay ninguna celda que lo cumpla, no aparece. Con 4 celdas
+## las zonas de muerte no llegan a solaparse, así que la partida nunca se acaba
+## en el mismo instante de la aparición.
+@export var radio_caceria_min: int = 4
 
 @export_group("Referencias")
 @export var nodo_jugadora: NodePath = ^"../girl"
@@ -661,42 +666,53 @@ func _cazar() -> void:
 
 
 # Busca una celda donde aparecer alrededor de la jugadora. Se va aflojando una
-# condición cada ronda, en este orden, porque la aparición tiene que ser SIEMPRE:
+# condición cada ronda, en este orden, porque la aparición tiene que ser SIEMPRE
+# lejos de ella: lo único que se relaja es el tipo de sitio, nunca la distancia.
 #
 #   1) sala de verdad, a un radio cómodo
-#   2) sala de verdad, radio doble y sin exigir distancia
+#   2) sala de verdad, radio doble
 #   3) sala de verdad, en todo el mapa
 #   4) cualquier celda transitable, por si el mapa no tiene ni una sala de 3x3
 #
-# Un pasillo de un tile no tiene ni 3x3 libres alrededor, así que el punto 4 sólo
-# se da en mapas laberínticos, pero en ese caso mejor eso que no aparecer.
+# Todas las rondas piden como mínimo `radio_caceria_min` celdas de distancia:
+# antes se aflojaba a 0 en las rondas de reserva y el enemigo podía caer en la
+# misma celda que la jugadora, lo que terminaba la partida al instante. Si en
+# todo el mapa no hay ninguna celda a esa distancia (mapa minúsculo), se
+# devuelve Vector2i(-1,-1) y no se aparece: mejor eso que perder la partida.
 func _celda_sala_cerca(centro: Vector2) -> Vector2i:
 	var base := _mapa.celda_de(centro)
 	var limite := maxi(_mapa.dimensiones().x, _mapa.dimensiones().y)
-	var radio := clampi(radio_caceria, 2, maxi(limite, 2))
-	var minimo := clampi(radio_caceria_min, 0, radio - 1)
+	var minimo := distancia_minima()
+	var radio := clampi(maxi(radio_caceria, minimo), 2, maxi(limite, 2))
 
 	var celda := _mapa.celda_sala_cerca(base, radio, minimo, 1)
 	if celda.x >= 0:
 		return celda
 
-	# Radio doble, pero ya sin exigirle que esté lejos.
-	celda = _mapa.celda_sala_cerca(base, mini(radio * 2, limite), 0, 1)
+	# Radio doble, pero sigue sin poder acercarse de más.
+	celda = _mapa.celda_sala_cerca(base, mini(radio * 2, limite), minimo, 1)
 	if celda.x >= 0:
 		return celda
 
 	# Toda la superficie del mapa.
-	celda = _mapa.celda_sala_cerca(base, limite, 0, 1)
+	celda = _mapa.celda_sala_cerca(base, limite, minimo, 1)
 	if celda.x >= 0:
 		return celda
 
-	return _mapa.celda_sala_cerca(base, limite, 0, 0)
+	return _mapa.celda_sala_cerca(base, limite, minimo, 0)
+
+
+## Distancia mínima exigida a la jugadora, en celdas.
+func distancia_minima() -> int:
+	return maxi(radio_caceria_min, 1)
 
 
 # Teletransporte a una celda de sala. Se limpia todo el estado de atasco porque
 # la posición cambia de golpe, y se le da la posición de la jugadora como si la
 # hubiera oído: para eso aparece tan cerca.
 func _aparecer(destino: Vector2) -> void:
+	if not _destino_valido(destino):
+		return
 	global_position = destino
 	velocity = Vector2.ZERO
 	_atascado = 0.0
@@ -712,8 +728,28 @@ func _aparecer(destino: Vector2) -> void:
 	if _jugadora != null:
 		_ultima_onda_pos = _jugadora.global_position
 	_memoria = memoria_segundos
-	print("[enemigo] CACERÍA: aparece en ", destino,
-			" a ", int(global_position.distance_to(_jugadora.global_position)), " px de la Girl")
+	var dist_px := -1
+	if _jugadora != null:
+		dist_px = int(global_position.distance_to(_jugadora.global_position))
+	print("[enemigo] CACERÍA: aparece en ", destino, " a ", dist_px, " px de la Girl")
+
+
+## Filtro final antes de teletransportarse: si el destino no está a al menos
+## `radio_caceria_min` celdas de la jugadora, no se aparece. Pase por donde
+## pase la búsqueda, aquí no se cuela ninguna celda pegada a ella, así que el
+## enemigo nunca puede salir encima de sus pies y matar la partida al instante.
+func _destino_valido(destino: Vector2) -> bool:
+	if _mapa == null or _jugadora == null:
+		push_warning("scripts/enemigo.gd: sin mapa o sin jugadora, no se aparece.")
+		return false
+	var celda := _mapa.celda_de(destino)
+	var suya := _mapa.celda_de(_jugadora.global_position)
+	var dist := maxi(absi(celda.x - suya.x), absi(celda.y - suya.y))
+	var minimo := distancia_minima()
+	if dist >= minimo:
+		return true
+	push_warning("enemigo.gd: aparece a sólo %d celdas (mínimo %d)." % [dist, minimo])
+	return false
 
 
 # ---------------------------------------------------------------- puntos
