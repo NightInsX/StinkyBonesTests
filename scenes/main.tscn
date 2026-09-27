@@ -11,17 +11,33 @@
 [ext_resource type="PackedScene" path="res://scenes/puerta.tscn" id="10_puerta"]
 [ext_resource type="Script" uid="uid://bpemj21j1bgw1" path="res://scripts/objetivo.gd" id="11_objetivo"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_girl"]
-size = Vector2(131, 130)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ybya7"]
+size = Vector2(146.25, 142.5)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_oido"]
 radius = 55.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_girl"]
+size = Vector2(131, 130)
+
+[sub_resource type="Gradient" id="Gradient_pomdm"]
+offsets = PackedFloat32Array(0, 0.37349397, 0.78313255)
+colors = PackedColorArray(0.7391794, 0.84687734, 0.8535122, 1, 0.25, 0.25, 0.25, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_choun"]
+gradient = SubResource("Gradient_pomdm")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 1)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_enemigo"]
 size = Vector2(141, 140)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_oido_enemigo"]
 radius = 640.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vjsud"]
+size = Vector2(153, 155)
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_ybya7"]
 vertices = PackedVector2Array(1049, -94.03125, 1049, 533.03906, 972.6406, 117.09375, 963.34375, -34.140625, -77.14844, -97.96094, 467.29688, -26.859375, 717.53906, 114.890625, -86.84375, 537.9531, 462.6797, 124.390625)
@@ -60,9 +76,14 @@ metadata/_edit_group_ = true
 [node name="Sprite2D" type="Sprite2D" parent="girl" unique_id=2090177265]
 texture = ExtResource("2_epypp")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="girl" unique_id=174669617]
-position = Vector2(-1, -1)
-shape = SubResource("RectangleShape2D_girl")
+[node name="Zona_Muerte" type="Area2D" parent="girl" unique_id=1514738566]
+scale = Vector2(0.99999994, 0.99999994)
+collision_layer = 8
+collision_mask = 8
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="girl/Zona_Muerte" unique_id=1230386220]
+position = Vector2(-0.625, -1.25)
+shape = SubResource("RectangleShape2D_ybya7")
 
 [node name="Oido" type="Area2D" parent="girl" unique_id=1862528305]
 collision_layer = 0
@@ -72,12 +93,21 @@ collision_mask = 0
 shape = SubResource("CircleShape2D_oido")
 
 [node name="Camara" type="Camera2D" parent="girl" unique_id=32754225]
-zoom = Vector2(0.1, 0.1)
+zoom = Vector2(0.5, 0.5)
 position_smoothing_enabled = true
 position_smoothing_speed = 6.0
 
+[node name="CollisionShape2D" type="CollisionShape2D" parent="girl" unique_id=174669617]
+position = Vector2(-1, -1)
+shape = SubResource("RectangleShape2D_girl")
+
+[node name="PointLight2D" type="PointLight2D" parent="girl" unique_id=848793649]
+scale = Vector2(4.921874, 4.960937)
+energy = 6.53
+texture = SubResource("GradientTexture2D_choun")
+
 [node name="Enemigo" type="CharacterBody2D" parent="." unique_id=1308254453]
-position = Vector2(95, 100)
+position = Vector2(62, 103)
 collision_mask = 9
 motion_mode = 1
 script = ExtResource("4_q6r6c")
@@ -102,6 +132,14 @@ collision_mask = 0
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Enemigo/Oido" unique_id=455255318]
 shape = SubResource("CircleShape2D_oido_enemigo")
 
+[node name="Area2D" type="Area2D" parent="Enemigo" unique_id=1440005573]
+collision_layer = 8
+collision_mask = 8
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemigo/Area2D" unique_id=110942701]
+position = Vector2(-0.5, -0.5)
+shape = SubResource("RectangleShape2D_vjsud")
+
 [node name="NavigationRegion2D" type="NavigationRegion2D" parent="." unique_id=1550815592]
 visible = false
 position = Vector2(95, 100)
@@ -112,3 +150,11 @@ enabled = false
 position = Vector2(477.0083, 1.3548374)
 scale = Vector2(0.5041494, 1.0564516)
 polygon = PackedVector2Array(-0.016479492, -17.374046, 946, -24, 962, 100, 477, 98, -7.9506836, 106.62597)
+
+[node name="DirectionalLight2D" type="DirectionalLight2D" parent="." unique_id=1767277561]
+position = Vector2(100, 188)
+scale = Vector2(1.375, 1.375)
+color = Color(0.85, 0.85749996, 1, 1)
+blend_mode = 1
+
+[connection signal="area_entered" from="girl/Zona_Muerte" to="girl" method="_on_zona_muerte_area_entered"]

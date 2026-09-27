@@ -1,12 +1,5 @@
 [gd_resource type="Theme" format=3 uid="uid://d27b4w6eanc0f"]
 
-<<<<<<< HEAD
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8lupt"]
-
-[resource]
-Button/font_sizes/font_size = 16
-Button/styles/normal = SubResource("StyleBoxFlat_8lupt")
-=======
 [ext_resource type="Texture2D" uid="uid://bj5u5o30ejx7d" path="res://graphics/resources/wooden_button1.png" id="1_jeqjc"]
 [ext_resource type="FontFile" uid="uid://snma332gj2q0" path="res://graphics/themes/GrapeSoda.ttf" id="1_yj64y"]
 [ext_resource type="Texture2D" uid="uid://bx4u2gyhktdp2" path="res://graphics/resources/wooden_button2.png" id="2_slbfi"]
@@ -42,4 +35,4 @@ HSlider/icons/grabber = ExtResource("5_yj64y")
 HSlider/icons/grabber_highlight = ExtResource("5_yj64y")
 Label/font_sizes/font_size = 24
 Label/fonts/font = ExtResource("1_yj64y")
->>>>>>> Experimental_frontend
+RichTextLabel/fonts/normal_font = ExtResource("1_yj64y")

@@ -357,7 +357,11 @@ offset_left = 192.0
 offset_top = 128.0
 offset_right = 320.0
 offset_bottom = 151.0
-text = "Controls"
+text = "Controls:
+
+[W,A,S,D] - Move
+
+Left click - Echo"
 horizontal_alignment = 1
 
 [node name="Button2" type="Button" parent="Settings" unique_id=2036214075]
@@ -370,6 +374,7 @@ text = "Go back"
 
 [node name="invisible_panel" type="Panel" parent="." unique_id=1240153294]
 visible = false
+z_index = 3
 layout_mode = 0
 offset_right = 640.0
 offset_bottom = 360.0

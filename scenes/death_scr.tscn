@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://cpid2cnauhshe"]
 
+[ext_resource type="Theme" uid="uid://d27b4w6eanc0f" path="res://graphics/themes/menutheme.tres" id="1_it3hq"]
 [ext_resource type="Script" uid="uid://dpmkcluk55dor" path="res://scripts/death_scr.gd" id="1_ml0gd"]
 
 [node name="DeathScr" type="Control" unique_id=361650977]
@@ -9,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_it3hq")
 script = ExtResource("1_ml0gd")
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=909038703]

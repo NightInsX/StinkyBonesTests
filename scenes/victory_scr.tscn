@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://ehisnh847ikr"]
 
+[ext_resource type="Theme" uid="uid://d27b4w6eanc0f" path="res://graphics/themes/menutheme.tres" id="1_2q7cx"]
 [ext_resource type="Script" uid="uid://du7pbkweorhjw" path="res://scripts/victory_scr.gd" id="1_bbkok"]
 
 [node name="VictoryScr" type="Control" unique_id=353744906]
@@ -9,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_2q7cx")
 script = ExtResource("1_bbkok")
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=714695427]

@@ -45,10 +45,11 @@ var tiene_llave: bool = false
 
 
 func _ready() -> void:
+	Global.overworld = true
 	add_child(cooldown)
 	cooldown.wait_time = wave_cooldown
 	cooldown.one_shot = true
-	
+
 	if _oido == null:
 		push_warning("character_body_2d.gd: falta el Area2D hijo 'Oido', no oirá nada")
 	else:
@@ -70,6 +71,7 @@ func _physics_process( delta: float) -> void:
 
 	_gastar_efectos(delta)
 	_chocar_con_sensibles()
+
 
 
 ## Baja los contadores de ralentización y de enfriamiento del aviso. Va ANTES
@@ -138,10 +140,13 @@ func emitir_onda() -> void:
 	wave.max_radius = wave_max_radius
 	wave.duration = wave_duration
 	add_child(wave)
-	
+
 	wave.top_level = true
 	wave.global_position = global_position
 	wave.rotation = (get_global_mouse_position() - global_position).angle()
 	cooldown.start()
 
 	print("[personaje] onda lanzada en ", wave.global_position, " radio=", wave.max_radius, " dir=", wave.rotation)
+
+func _on_zona_muerte_area_entered(_area: Area2D) -> void:
+	get_tree().change_scene_to_file("res://scenes/death_scr.tscn")

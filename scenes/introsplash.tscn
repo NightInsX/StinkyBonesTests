@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d00krikv8s4l3"]
 
 [ext_resource type="Script" uid="uid://dlhsb2gyoratr" path="res://scripts/introsplash.gd" id="1_7cvqm"]
-[ext_resource type="Texture2D" uid="uid://dj3h0rabrid5m" path="res://icon.svg" id="1_lsplx"]
+[ext_resource type="Theme" uid="uid://d27b4w6eanc0f" path="res://graphics/themes/menutheme.tres" id="1_exiaa"]
 
 [sub_resource type="Animation" id="Animation_exiaa"]
 length = 0.001
@@ -47,12 +47,21 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_exiaa")
 script = ExtResource("1_7cvqm")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=470362412]
+[node name="Sprite2D" type="RichTextLabel" parent="." unique_id=1672982266]
 modulate = Color(1, 1, 1, 0)
-position = Vector2(320, 176)
-texture = ExtResource("1_lsplx")
+layout_mode = 0
+offset_left = 256.0
+offset_top = 128.0
+offset_right = 384.0
+offset_bottom = 232.0
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "[wave]Made by the Stinky Bones team"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=707206162]
 libraries/ = SubResource("AnimationLibrary_jfejf")

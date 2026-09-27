@@ -1029,3 +1029,7 @@ func _imprimir_resumen() -> void:
 			Generador.keys()[generador], semilla, d.x, d.y, d.x * tile, d.y * tile])
 	print("[DTLMapa] navegación: %d polígonos | colisión: %d rectángulos | suelo inicial: %s" % [
 			poligonos, muros.size(), punto_inicial()])
+
+
+func _on_zona_muerte_area_entered(area: Area2D) -> void:
+	pass # Replace with function body.
