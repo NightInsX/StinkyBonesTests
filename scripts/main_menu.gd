@@ -5,6 +5,8 @@ func _ready():
 	$Settings/HSlider.value = Global.master_volume
 	$Settings/CheckButton.button_pressed = Global.fullscreen
 	$Settings/volume.text = "Currently: " + str(Global.master_volume)
+	for button in get_tree().get_nodes_in_group("Buttons"):
+		button.pressed.connect(_on_button_pressed)
 
 func _on_play_pressed() -> void:
 	$Animations.play("outro")
@@ -54,3 +56,6 @@ func _on_credits_pressed() -> void:
 
 func _on_button_2_pressed() -> void:
 	_on_exiting_credits()
+
+func _on_button_pressed() -> void:
+	$AudioStreamPlayer2.play()

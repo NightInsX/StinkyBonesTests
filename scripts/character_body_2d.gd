@@ -42,6 +42,8 @@ var _alerta_enfriamiento: float = 0.0
 var tiene_llave: bool = false
 
 @onready var _oido: Area2D = $Oido
+@onready var _animation_tree: AnimationTree = $AnimationTree
+@onready var _state_machine: AnimationNodeStateMachinePlayback = _animation_tree.get("parameters/playback")
 
 
 func _ready() -> void:
@@ -49,6 +51,10 @@ func _ready() -> void:
 	add_child(cooldown)
 	cooldown.wait_time = wave_cooldown
 	cooldown.one_shot = true
+	Global.overworld = true
+	_animation_tree.active = true
+	add_child(cooldown)
+
 
 	if _oido == null:
 		push_warning("character_body_2d.gd: falta el Area2D hijo 'Oido', no oirá nada")
@@ -68,11 +74,17 @@ func _physics_process( delta: float) -> void:
 	velocity.x = direction_x * marcha
 	velocity.y = direction_y * marcha
 	move_and_slide()
-
+	_update_animation(direction_x, direction_y)
 	_gastar_efectos(delta)
 	_chocar_con_sensibles()
 
-
+func _update_animation(direction_x: float, direction_y: float) -> void:
+	var direction := Vector2(direction_x, direction_y)
+	if direction != Vector2.ZERO:
+		_state_machine.travel("Walk")
+		_animation_tree.set("parameters/Walk/blend_position", direction)
+	else:
+		_state_machine.travel("Idle")
 
 ## Baja los contadores de ralentización y de enfriamiento del aviso. Va ANTES
 ## de mirar las colisiones para que un golpe de este frame ponga el contador a

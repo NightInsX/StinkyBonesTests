@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://qr16q5an4sue" path="res://graphics/resources/vine.png" id="5_826wr"]
 [ext_resource type="Texture2D" uid="uid://f4s7gqrid3rl" path="res://graphics/resources/caveceiling.png" id="6_826wr"]
 [ext_resource type="AudioStream" uid="uid://b2av8cpadg0mv" path="res://sounds/menu_inicio.wav" id="7_ucygd"]
+[ext_resource type="AudioStream" uid="uid://2gsn07lqtmxg" path="res://sounds/button_select.wav" id="8_mipys"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_2wh52"]
 shader = ExtResource("3_ow34m")
@@ -367,23 +368,23 @@ offset_right = 168.0
 offset_bottom = 320.0
 metadata/_edit_group_ = true
 
-[node name="Play" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1683232696]
+[node name="Play" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1683232696 groups=["Buttons"]]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Play"
 
-[node name="Settings" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1475383543]
+[node name="Settings" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1475383543 groups=["Buttons"]]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Settings"
 
-[node name="Credits" type="Button" parent="TitleScreen/VBoxContainer" unique_id=2003417569]
+[node name="Credits" type="Button" parent="TitleScreen/VBoxContainer" unique_id=2003417569 groups=["Buttons"]]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Credits
 "
 
-[node name="Exit" type="Button" parent="TitleScreen/VBoxContainer" unique_id=141068482]
+[node name="Exit" type="Button" parent="TitleScreen/VBoxContainer" unique_id=141068482 groups=["Buttons"]]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Exit"
@@ -428,7 +429,7 @@ offset_top = 160.0
 offset_right = 56.0
 offset_bottom = 192.0
 
-[node name="Button" type="Button" parent="Settings" unique_id=744446287]
+[node name="Button" type="Button" parent="Settings" unique_id=744446287 groups=["Buttons"]]
 layout_mode = 0
 offset_left = 64.0
 offset_top = 160.0
@@ -481,7 +482,6 @@ Left click - Echo"
 horizontal_alignment = 1
 
 [node name="Button2" type="Button" parent="Settings" unique_id=2036214075 groups=["Buttons"]]
-visible = false
 layout_mode = 0
 offset_left = 24.0
 offset_top = 304.0
@@ -541,6 +541,11 @@ autoplay = &"ready"
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=753173397]
 stream = ExtResource("7_ucygd")
 autoplay = true
+
+[node name="AudioStreamPlayer2" type="AudioStreamPlayer" parent="." unique_id=1566586821]
+stream = ExtResource("8_mipys")
+volume_db = -15.0
+pitch_scale = 0.54
 
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Play" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Settings" to="." method="_on_settings_pressed"]
