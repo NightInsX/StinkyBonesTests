@@ -772,3 +772,5 @@ func _medio_cuerpo() -> float:
 	elif forma is CircleShape2D:
 		lado = (forma as CircleShape2D).radius
 	return lado * maxf(global_scale.x, global_scale.y)
+	
+	

@@ -72,6 +72,7 @@ func _physics_process( delta: float) -> void:
 	_chocar_con_sensibles()
 
 
+
 ## Baja los contadores de ralentización y de enfriamiento del aviso. Va ANTES
 ## de mirar las colisiones para que un golpe de este frame ponga el contador a
 ## tope y no se lo coma el descuento.
@@ -145,3 +146,10 @@ func emitir_onda() -> void:
 	cooldown.start()
 
 	print("[personaje] onda lanzada en ", wave.global_position, " radio=", wave.max_radius, " dir=", wave.rotation)
+	
+	
+
+
+
+func _on_zona_muerte_area_entered(area: Area2D) -> void:
+	print('Has muerto')
