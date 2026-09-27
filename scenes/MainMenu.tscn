@@ -3,21 +3,29 @@
 [ext_resource type="Theme" uid="uid://d27b4w6eanc0f" path="res://graphics/themes/menutheme.tres" id="1_2wh52"]
 [ext_resource type="Script" uid="uid://bsc0d7aq0gbgk" path="res://scripts/main_menu.gd" id="1_yqorp"]
 [ext_resource type="Shader" uid="uid://hoty1xxv5ia1" path="res://graphics/shaders/MainMenu.gdshader" id="3_ow34m"]
-[ext_resource type="Texture2D" uid="uid://dj3h0rabrid5m" path="res://icon.svg" id="4_ow34m"]
+[ext_resource type="Texture2D" uid="uid://bbtromuds205c" path="res://graphics/resources/menulayer.png" id="4_l72w3"]
+[ext_resource type="Texture2D" uid="uid://qr16q5an4sue" path="res://graphics/resources/vine.png" id="5_826wr"]
+[ext_resource type="Texture2D" uid="uid://f4s7gqrid3rl" path="res://graphics/resources/caveceiling.png" id="6_826wr"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_2wh52"]
 shader = ExtResource("3_ow34m")
-shader_parameter/hole_center = Vector2(0.5, 0.5)
-shader_parameter/hole_radius = 0.2
-shader_parameter/edge_softness = 0.01
-shader_parameter/rect_size = Vector2(1, 1)
+shader_parameter/tile_count = Vector2(8, 8)
+shader_parameter/scroll_speed = Vector2(0.1, 0.05)
+shader_parameter/projection_angle_degrees = 50.0
+shader_parameter/copy_spacing_pixels = 12.0
+shader_parameter/front_color = Color(1, 1, 1, 1)
+shader_parameter/user_color = Color(0.25, 0.65, 1, 1)
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_8a8k8"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_50aim"]
 shader = ExtResource("3_ow34m")
-shader_parameter/hole_center = Vector2(0.8, 0.7)
-shader_parameter/hole_radius = 0.15
-shader_parameter/edge_softness = 0.01
-shader_parameter/rect_size = Vector2(1, 1)
+shader_parameter/mask_tex = ExtResource("4_l72w3")
+shader_parameter/pattern_tex = ExtResource("5_826wr")
+shader_parameter/tile_count = Vector2(8, 4)
+shader_parameter/scroll_speed = Vector2(0.1, 0.05)
+shader_parameter/projection_angle_degrees = 50.0
+shader_parameter/copy_spacing_pixels = 12.0
+shader_parameter/front_color = Color(0.14, 0.11498667, 0.046199996, 0.61960787)
+shader_parameter/user_color = Color(0.42, 0.30282, 0.15959999, 0.7921569)
 
 [sub_resource type="Gradient" id="Gradient_ow34m"]
 offsets = PackedFloat32Array(0, 0.5, 1)
@@ -34,14 +42,14 @@ length = 0.001
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Panel:position")
+tracks/0/path = NodePath("ColorRect/Panel:position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
 "update": 0,
-"values": [Vector2(416, 192)]
+"values": [Vector2(424, 168)]
 }
 
 [sub_resource type="Animation" id="Animation_ucygd"]
@@ -51,14 +59,14 @@ loop_mode = 1
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath("Panel:position")
+tracks/0/path = NodePath("ColorRect/Panel:position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
 "times": PackedFloat32Array(0, 5),
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
-"values": [Vector2(416, 192), Vector2(-408, 192)]
+"values": [Vector2(424, 168), Vector2(-432, 168)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_mipys"]
@@ -67,57 +75,70 @@ _data = {
 &"slide_cave": SubResource("Animation_ucygd")
 }
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_8lupt"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_826wr"]
+bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="Animation" id="Animation_ow34m"]
 length = 0.001
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath(".:modulate")
+tracks/0/path = NodePath("ColorRect/Panel:position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
 "update": 0,
-"values": [Color(1, 1, 1, 0)]
+"values": [Vector2(416, 192)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
 tracks/1/enabled = true
-tracks/1/path = NodePath("bg/Panel:position")
+tracks/1/path = NodePath("TitleScreen:position")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
 "update": 0,
-"values": [Vector2(416, 192)]
+"values": [Vector2(0, 0)]
 }
 tracks/2/type = "value"
 tracks/2/imported = false
 tracks/2/enabled = true
-tracks/2/path = NodePath("TitleScreen:position")
+tracks/2/path = NodePath("Settings:position")
 tracks/2/interp = 1
 tracks/2/loop_wrap = true
 tracks/2/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
 "update": 0,
-"values": [Vector2(0, 0)]
+"values": [Vector2(640, 0)]
 }
 tracks/3/type = "value"
 tracks/3/imported = false
 tracks/3/enabled = true
-tracks/3/path = NodePath("Settings:position")
+tracks/3/path = NodePath("invisible_panel:visible")
 tracks/3/interp = 1
 tracks/3/loop_wrap = true
 tracks/3/keys = {
 "times": PackedFloat32Array(0),
 "transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+tracks/4/type = "value"
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/path = NodePath("invisible_panel:modulate")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
 "update": 0,
-"values": [Vector2(640, 0)]
+"values": [Color(1, 1, 1, 1)]
 }
 
 [sub_resource type="Animation" id="Animation_l72w3"]
@@ -125,14 +146,26 @@ resource_name = "ready"
 tracks/0/type = "value"
 tracks/0/imported = false
 tracks/0/enabled = true
-tracks/0/path = NodePath(".:modulate")
+tracks/0/path = NodePath("invisible_panel:visible")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
 "times": PackedFloat32Array(0, 1),
 "transitions": PackedFloat32Array(1, 1),
+"update": 1,
+"values": [true, false]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("invisible_panel:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
 "update": 0,
-"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
 }
 
 [sub_resource type="Animation" id="Animation_mipys"]
@@ -145,10 +178,10 @@ tracks/0/path = NodePath("TitleScreen:position")
 tracks/0/interp = 2
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 1.6),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat32Array(0, 1.5, 1.6),
+"transitions": PackedFloat32Array(1, 1, 1),
 "update": 0,
-"values": [Vector2(0, 0), Vector2(-640, 0)]
+"values": [Vector2(0, 0), Vector2(-645, 0), Vector2(-640, 0)]
 }
 tracks/1/type = "value"
 tracks/1/imported = false
@@ -157,10 +190,10 @@ tracks/1/path = NodePath("Settings:position")
 tracks/1/interp = 2
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0, 1.6),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat32Array(0, 1.5, 1.6),
+"transitions": PackedFloat32Array(1, 1, 1),
 "update": 0,
-"values": [Vector2(640, 0), Vector2(0, 0)]
+"values": [Vector2(640, 0), Vector2(-5, 0), Vector2(0, 0)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_826wr"]
@@ -171,7 +204,6 @@ _data = {
 }
 
 [node name="MainMenu" type="Control" unique_id=1500635961]
-modulate = Color(1, 1, 1, 0)
 material = SubResource("ShaderMaterial_2wh52")
 layout_mode = 3
 anchors_preset = 15
@@ -182,27 +214,36 @@ grow_vertical = 2
 theme = ExtResource("1_2wh52")
 script = ExtResource("1_yqorp")
 
-[node name="bg" type="ColorRect" parent="." unique_id=1690723093]
-material = SubResource("ShaderMaterial_8a8k8")
+[node name="TextureRect" type="TextureRect" parent="." unique_id=2022806039]
+modulate = Color(0, 0, 0, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 2
-color = Color(0.12, 0.12, 0.12, 1)
+texture = ExtResource("4_l72w3")
 
-[node name="Panel" type="Panel" parent="bg" unique_id=1489419077]
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1054337564]
+material = SubResource("ShaderMaterial_50aim")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="ColorRect" unique_id=1489419077]
 z_index = -1
 layout_mode = 0
 offset_left = 416.0
 offset_top = 192.0
-offset_right = 1440.0
-offset_bottom = 320.0
+offset_right = 1439.9976
+offset_bottom = 360.0
 theme_override_styles/panel = SubResource("StyleBoxTexture_wwruc")
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="bg" unique_id=492316423]
+[node name="AnimationPlayer" type="AnimationPlayer" parent="ColorRect" unique_id=492316423]
+root_node = NodePath("../..")
 libraries/ = SubResource("AnimationLibrary_mipys")
 autoplay = &"slide_cave"
 
@@ -245,15 +286,15 @@ text = "Game logo"
 [node name="Peaks" type="TextureRect" parent="TitleScreen" unique_id=986769366]
 z_index = 2
 layout_mode = 0
-offset_top = -80.0
 offset_right = 1280.0
-offset_bottom = 56.0
-texture = ExtResource("4_ow34m")
+offset_bottom = 48.0
+texture = ExtResource("6_826wr")
+stretch_mode = 1
 
 [node name="Settings" type="Control" parent="." unique_id=1848050210]
 anchors_preset = 0
 offset_left = 640.0
-offset_right = 1280.0
+offset_right = 1279.9988
 offset_bottom = 360.0
 
 [node name="Label" type="Label" parent="Settings" unique_id=464689345]
@@ -332,7 +373,7 @@ visible = false
 layout_mode = 0
 offset_right = 640.0
 offset_bottom = 360.0
-theme_override_styles/panel = SubResource("StyleBoxEmpty_8lupt")
+theme_override_styles/panel = SubResource("StyleBoxFlat_826wr")
 
 [node name="Animations" type="AnimationPlayer" parent="." unique_id=646417311]
 libraries/ = SubResource("AnimationLibrary_826wr")

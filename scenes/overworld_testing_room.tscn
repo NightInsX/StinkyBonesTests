@@ -24,7 +24,7 @@ script = ExtResource("1_pomdm")
 [node name="ColorRect" type="ColorRect" parent="." unique_id=20182372]
 offset_right = 640.0
 offset_bottom = 360.0
-color = Color(0.1, 0.1, 0.1, 1)
+color = Color(0.080783375, 0.08078333, 0.080783345, 1)
 
 [node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=113321625]
 
@@ -37,9 +37,9 @@ position = Vector2(256, 128)
 shape = SubResource("RectangleShape2D_8lupt")
 
 [node name="PointLight2D" type="PointLight2D" parent="." unique_id=1865981145]
-position = Vector2(232.00002, 224)
+position = Vector2(165, 255)
 scale = Vector2(3.9374995, 3.96875)
-energy = 6.83
+energy = 6.53
 texture = SubResource("GradientTexture2D_8lupt")
 
 [node name="DirectionalLight2D" type="DirectionalLight2D" parent="." unique_id=1571400629]
