@@ -58,6 +58,23 @@ signal generar_terminada(dimensiones: Vector2i)
 ## conectividad: cualquier ruta que había antes sigue existiendo.
 @export_range(0, 6) var engrosar: int = 0
 
+## Cuántos segundos marca cada bloque de muro el "chocado" de la onda de la Girl
+## antes de volver a false. Está aquí y no sólo en Bloque porque los bloques se
+## crean desde código, no desde una escena: si el plazo sólo estuviera en el
+## script, cambiarlo obligaría a tocar código.
+@export_range(0.1, 10.0, 0.1) var duracion_chocado_muro: float = 1.5
+
+## Fracción de los bloques de muro que se generan como "sensibles". Son
+## idénticos al resto mientras no llega nada (mismo color, mismo borde, misma
+## física), pero la onda de la Girl los enciende en rojo en vez de en azul: la
+## única pista para encontrarlos es lanzar ondas y ver cuáles responden
+## distinto. La elección es determinista con `semilla`, así que con la misma
+## semilla salen siempre los mismos.
+@export_range(0.0, 1.0, 0.05) var proporcion_sensibles: float = 0.3
+
+## Color con el que se enciende un bloque sensible al recibir la onda.
+@export var color_sensible := Color(1.0, 0.3, 0.24)
+
 ## Anchura máxima de los pasillos, en tiles, contando con el pasillo. 1 deja el
 ## mapa tal cual sale de DTL, que es de pasillos de 1 tile. Con 2 se ensancha una
 ## parte de los pasillos para que el enemigo de 1.1 tiles quepa, y el resto se
@@ -73,8 +90,15 @@ signal generar_terminada(dimensiones: Vector2i)
 @export_range(8, 128, 8) var tile: int = 32
 @export var pintar: bool = true
 @export var colision_muros: bool = true
-@export var capa_colision: int = 1
-@export var mascara_colision: int = 1
+## Capa propia de los muros, el bit 3 (valor 8). Vive separada de la de los
+## personajes a propósito: el recorte de la onda lanza rayos con esta máscara, y
+## si los muros compartieran capa con la Girl y el enemigo cada rayo saldría
+## impactado por el cuerpo que tiene delante, que es justo lo que hay que evitar.
+## Con la separación, `mascara_colision` (lo que los muros detectan) se queda en
+## la capa de los personajes y no hay que tocar nada más para que todo encaje.
+@export_flags_2d_physics var capa_colision: int = Bloque.CAPA_MURO
+## Lo que detectan los muros. La capa 1 es la de los personajes.
+@export_flags_2d_physics var mascara_colision: int = Bloque.CAPA_PERSONAJE
 
 @export_group("Navegación")
 @export var generar_navegacion: bool = true
@@ -132,7 +156,7 @@ var _rejilla: Array[Array] = []
 var _datos: Array = []
 var _dtl: Object = null
 var _tiles_generados: TileMapLayer = null
-var _cuerpos: StaticBody2D = null
+var _bloques: Array[Bloque] = []
 var _regiones: Array[NavigationRegion2D] = []
 ## Un byte por celda de la rejilla de navegación (más fina que los tiles cuando
 ## hay `cuerpo_nav`), 1 si el cuerpo cabe ahí. Se guarda para poder preguntar por
@@ -234,6 +258,48 @@ func dimensiones() -> Vector2i:
 ## Centro en píxeles de una celda, ya en coordenadas de mundo.
 func centro_celda(celda: Vector2i) -> Vector2:
 	return to_global(_centro_celda(celda))
+
+
+## Todos los bloques de muro del mapa, uno por rectángulo. Vacío si
+## `colision_muros` está apagado, porque entonces no se construye ninguno.
+func bloques() -> Array[Bloque]:
+	return _bloques
+
+
+## Sólo los marcados como sensibles en esta generación: iguales que el resto en
+## reposo, pero los que la onda de la Girl enciende en rojo.
+func bloques_sensibles() -> Array[Bloque]:
+	var salida: Array[Bloque] = []
+	for bloque in _bloques:
+		if bloque.sensible:
+			salida.append(bloque)
+	return salida
+
+
+## El bloque de muro que cubre un punto del mundo, o null si ahí no hay muro.
+## Lo usa la onda para marcar el trozo de muro que ha tocado, y las pruebas para
+## comprobar que la marca salta de un bloque a su vecino y no al de más allá.
+func bloque_en(punto: Vector2) -> Bloque:
+	var local := to_local(punto)
+	for bloque in _bloques:
+		var col := bloque.get_child(0) as CollisionShape2D
+		var forma := col.shape as RectangleShape2D
+		var medio := forma.size * 0.5
+		if absf(local.x - col.position.x) <= medio.x \
+				and absf(local.y - col.position.y) <= medio.y:
+			return bloque
+	return null
+
+
+## ¿Hay muro en esta celda? `es_transitable` incluye también el umbral, que sí es
+## de suelo, así que para "esto es pared" hace falta esta.
+func es_muro(celda: Vector2i) -> bool:
+	if celda.y < 0 or celda.y >= _rejilla.size():
+		return true
+	var fila: Array = _rejilla[celda.y]
+	if celda.x < 0 or celda.x >= fila.size():
+		return true
+	return fila[celda.x] == Tipo.MURO
 
 
 ## ¿Un punto del mundo cae en la malla de navegación? Responde con la máscara que
@@ -733,7 +799,7 @@ func _limpiar() -> void:
 		remove_child(hijo)
 		hijo.queue_free()
 	_tiles_generados = null
-	_cuerpos = null
+	_bloques.clear()
 	_regiones.clear()
 	_rejilla.clear()
 
@@ -756,20 +822,48 @@ func _construir_tilemap() -> void:
 
 
 func _construir_colision() -> void:
-	var cuerpo := StaticBody2D.new()
-	cuerpo.name = "Muros"
-	cuerpo.collision_layer = capa_colision
-	cuerpo.collision_mask = mascara_colision
+	# Un cuerpo por rectángulo de muro, y no UN cuerpo con todos los rectángulos
+	# dentro. La diferencia se nota justo en esto: la onda de la Girl choca contra
+	# un cuerpo concreto y hay que poder poner la marca de "chocado" en ese trozo
+	# de muro y no en el mapa entero. Con un solo cuerpo, un chocado en la
+	# esquina norte encendería el "chocado" de los muros del sur.
+	var contenedor := Node2D.new()
+	contenedor.name = "Muros"
 	for r in _particionar(Tipo.MURO):
+		var bloque := Bloque.new()
+		bloque.duracion_chocado = duracion_chocado_muro
+		bloque.sensible = _es_sensible(r)
+		if bloque.sensible:
+			bloque.color_chocado_sensible = color_sensible
+		bloque.collision_layer = capa_colision
+		bloque.collision_mask = mascara_colision
 		var forma := RectangleShape2D.new()
 		forma.size = Vector2(r.size.x * tile, r.size.y * tile)
 		var col := CollisionShape2D.new()
 		col.shape = forma
 		col.position = Vector2(r.position.x * tile + r.size.x * tile * 0.5,
 				r.position.y * tile + r.size.y * tile * 0.5)
-		cuerpo.add_child(col)
-	add_child(cuerpo)
-	_cuerpos = cuerpo
+		bloque.add_child(col)
+		contenedor.add_child(bloque)
+		_bloques.append(bloque)
+	add_child(contenedor)
+
+
+## ¿Este rectángulo de muro sale sensible? Sólo cambia el color con el que se
+## enciende al chocar la onda de la Girl: para el resto (dibujo en reposo,
+## física, recorte del cono) es un bloque más.
+##
+## El hash mezcla posición, tamaño y `semilla` con la misma fórmula con la que
+## `_construir_tilemap` elige la variante de tesela, así que el reparto sale
+## distinto en cada rectángulo, se baraja entero al cambiar de semilla y, con
+## la misma semilla, siempre salen los mismos.
+func _es_sensible(r: Rect2i) -> bool:
+	if proporcion_sensibles <= 0.0:
+		return false
+	var variante := absi(hash(Vector2i(
+			r.position.x * 73856093 + r.size.x * 19349663,
+			r.position.y * 19349663 + r.size.y * 73856093)) ^ semilla)
+	return variante % 10000 < int(roundi(proporcion_sensibles * 10000.0))
 
 
 ## Construye la malla, erosionada por el cuerpo si hace falta. Si la erosión se

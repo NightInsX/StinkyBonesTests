@@ -1,13 +1,19 @@
+class_name Enemigo
 extends CharacterBody2D
 
 const Ecolocalización = preload("res://scenes/echo.tscn")
 
-@export var velocidad_max: float = 150.0
-@export var aceleracion: float = 700.0
+## Grupo en el que se apunta al entrar, para que la Girl pueda avisarlo sin
+## conocer su ruta ni su nombre en el árbol. El nombre es la constante, no un
+## literal suelto en cada script.
+const GRUPO := &"enemigo"
+
+@export var velocidad_max: float = 300
+@export var aceleracion: float = 900.0
 @export var frenado: float = 900.0
 @export var llegada: float = 12.0  # distancia a la que se considera que ha llegado
-@export var pausa_min: float = 0.5  # segundos parado entre destino y destino
-@export var pausa_max: float = 1.8
+@export var pausa_min: float = 0.3  # segundos parado entre destino y destino
+@export var pausa_max: float = 1
 @export var margen: float = 160.0  # no se acerca a los bordes del mapa
 
 @export_group("Oído")
@@ -17,6 +23,13 @@ const Ecolocalización = preload("res://scenes/echo.tscn")
 @export var distancia_carga: float = 1800.0  # si la oye más cerca de esto, va a por ella
 @export var memoria_segundos: float = 8.0  # cuánto recuerda dónde la oyó
 @export var radio_busqueda: int = 5  # celdas que barre alrededor del punto oído
+
+@export_group("Bloque sensible")
+## Segundos que persigue el golpe de la Girl contra un bloque sensible. Se
+## aparta de `memoria_segundos` a propósito: la onda se atenúa con la distancia
+## y con los muros de por medio, pero el golpe es una pista directa que llega
+## desde la otra punta del mapa, así que merece más tiempo.
+@export var alerta_segundos: float = 15.0
 
 @export_group("Desatasco")
 ## Segundos sin avanzar de verdad antes de buscar salida. Antes sólo miraba si
@@ -49,6 +62,20 @@ var _pausa: float = 0.0
 var _espera_onda: float = 0.0
 var _memoria: float = 0.0
 var _ultima_onda_pos: Vector2 = Vector2.ZERO
+## true mientras la pista que sigue es un GOLPE contra un bloque sensible y no
+## un sonido. Un golpe es un aviso directo: la Girl está ahí, pegada al muro, y
+## hay que ir aunque esté más lejos de `distancia_carga`. Se apaga solo cuando
+## se acaba `alerta_segundos` o cuando vuelve a oír una onda, que ya es pista
+## propia.
+var _alerta: bool = false
+## Segundos que quedan de persecución por el golpe, o 0 si no hay alerta.
+var _alerta_restante: float = 0.0
+
+## Ondas que han solapado con el `Oido` y a las que aún no se ha decidido si se
+## oyen. Sin tipar a propósito: una `Array[Echo]` con una onda ya liberada peta al
+## validarla, y las ondas se borran solas al terminar.
+var _ondas_oido: Array = []
+
 var _pos_previa: Vector2 = Vector2.ZERO
 var _atascado: float = 0.0
 var _ruta_impresa: bool = false
@@ -87,6 +114,7 @@ func _ready() -> void:
 	_radio = _medio_cuerpo()
 	_preparar_sonda()
 	_pos_previa = global_position
+	add_to_group(GRUPO)
 	# Que no dispare en el mismo instante que la Girl, para no solaparse.
 	_espera_onda = randf_range(0.4, onda_intervalo)
 	_jugadora = get_node_or_null(nodo_jugadora) as Node2D
@@ -99,6 +127,7 @@ func _ready() -> void:
 	else:
 		_oido.collision_mask = Echo.CAPA_ONDA_JUGADORA
 		_oido.area_entered.connect(_on_onda_entrada)
+		_oido.area_exited.connect(_on_onda_salida)
 	# La malla se puede generar al cargar la escena y tarda un frame en
 	# sincronizarse, así que la primera meta se sortea con la malla ya en pie.
 	await get_tree().physics_frame
@@ -109,6 +138,7 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	_espacio = get_world_2d().direct_space_state
 	_gastar_memoria(delta)
+	_oír_ondas()
 	_moverse(delta)
 	_lanzar_onda(delta)
 	_contar_caceria(delta)
@@ -121,16 +151,128 @@ func _on_onda_entrada(area: Area2D) -> void:
 	var onda := area.get_parent() as Echo
 	if onda == null:
 		return
+	# La onda sólo se apunta aquí; si se oye, se mira en `_oír_ondas()`, cada
+	# frame.
+	#
+	# Antes se decidía en este momento y medido sonaba en 9 de 40 casos con la Girl
+	# a un tile y medio y a la vista: `area_entered` salta en el primer frame de
+	# vida de la onda, y ahí el radio todavía vale cero y el recorte contra los
+	# muros aún no está calculado, así que `alcanza()` contestaba que no y el
+	# enemigo se quedaba sordo para siempre. Y como la forma de colección nace
+	# con el radio entero, el solape empieza en el frame 0 y el signal no vuelve a
+	# saltar cuando el sonido llega de verdad.
+	if not _ondas_oido.has(onda):
+		_ondas_oido.append(onda)
 
-	_ultima_onda_pos = onda.global_position
 
+## La onda se va del `Oido`: se suelta de la lista en vez de esperar a que
+## `_oír_ondas()` la encuentre liberada.
+func _on_onda_salida(area: Area2D) -> void:
+	if not area.is_in_group(Echo.AREA_GROUP):
+		return
+	var onda := area.get_parent() as Echo
+	if onda == null:
+		return
+	_ondas_oido.erase(onda)
+
+
+## La Girl ha chocado contra un bloque sensible: la llaman desde
+## `character_body_2d.gd` con el punto exacto del golpe. Va directo a por él,
+## sin comprobar distancia (`_alerta`), porque un muro que se queja es una
+## pista mejor que un sonido: dice dónde está ella y además está atascada
+## un rato contra ese muro.
+func alertar(punto: Vector2) -> void:
+	_ultima_onda_pos = punto
 	_memoria = memoria_segundos
-	print("[enemigo] OÍDO: Girl en ", _ultima_onda_pos,
-		" dist=", global_position.distance_to(_ultima_onda_pos),
-		" recuerda ", memoria_segundos, "s")
+	_alerta = true
+	_alerta_restante = alerta_segundos
+	_barriendo = false
+	_pausa = 0.0
+	_fuga_t = 0.0
+	_ruta_impresa = false
+	print("[enemigo] ALERTA: golpe contra un bloque sensible en ", punto,
+			" a ", int(global_position.distance_to(punto)), " px")
+
+
+## ¿Ha llegado el sonido de alguna de las ondas que ha solapado con el Oido?
+## Se mira cada frame porque la onda crece: la que nace lejos sólo cuenta cuando
+## su frente pasa por aquí, y ese momento no avisa la física con ningún signal.
+func _oír_ondas() -> void:
+	if _ondas_oido.is_empty():
+		return
+	var siguen: Array = []
+	for onda in _ondas_oido:
+		# Las ondas se borran solas al terminar, y sin esta comprobación una onda
+		# liberada deja la lista con un cuerpo muerto dentro.
+		if not is_instance_valid(onda) or not onda.is_inside_tree():
+			continue
+		# El Oido es un círculo de `radio_oido`, enorme, y asoma por detrás de los
+		# muros y por fuera del cono, así que el solape que le avisa la física no
+		# basta: sólo cuenta si el enemigo está donde la onda llega de verdad, y si
+		# hay línea de visión hasta la Girl. Medido sin esto: oía a través de los
+		# muros en 15 de 15 casos; con esto, en ninguno.
+		if not onda.alcanza(global_position):
+			siguen.append(onda)
+			continue
+		if not _llega_el_sonido(onda):
+			siguen.append(onda)
+			continue
+		_ultima_onda_pos = onda.global_position
+		_memoria = memoria_segundos
+		# Oída de verdad: la onda manda sobre un golpe anterior, que ya no aporta.
+		_alerta = false
+		_alerta_restante = 0.0
+		print("[enemigo] OÍDO: Girl en ", _ultima_onda_pos,
+			" dist=", global_position.distance_to(_ultima_onda_pos),
+			" recuerda ", memoria_segundos, "s")
+		# Oída: no se sigue con esta onda, y se sueltan las que quedaran.
+		_ondas_oido = siguen
+		return
+	_ondas_oido = siguen
+
+
+## ¿Se ve a la Girl desde aquí? Tres rayos contra la capa de los muros: si no hay
+## nada entre medias, el sonido ha podido llegar, y si hay pared, no. Se dispara
+## contra la Girl y no contra el borde de la onda porque el sonido sale de ella.
+func _llega_el_sonido(onda: Echo) -> bool:
+	if _espacio == null:
+		_espacio = get_world_2d().direct_space_state
+	if _espacio == null:
+		return true
+	# Tres rayos, el del medio y dos desplazados de lado, y tienen que estar los
+	# tres limpios. Con uno solo pasaba lo de siempre: un rayo que va pegado a la
+	# arista de un muro lo cuenta como golpe, y a un pelo de lado ya no, así que
+	# de vez en cuando el enemigo oía a través de una esquina. Medido: 1 de 27
+	# casos con muro de por medio. La perpendicular va hacia el lado que más
+	# cosas tapa, para no perder oído de más en un pasillo estrecho.
+	var linea := onda.global_position - global_position
+	var lado := linea.orthogonal().normalized() * 6.0
+	var origenes := [Vector2.ZERO, lado, -lado]
+	for desplazamiento in origenes:
+		var q := PhysicsRayQueryParameters2D.create(global_position + desplazamiento,
+				onda.global_position)
+		q.collision_mask = Bloque.CAPA_MURO
+		q.collide_with_areas = false
+		q.collide_with_bodies = true
+		if not _espacio.intersect_ray(q).is_empty():
+			return false
+	return true
 
 
 func _gastar_memoria(delta: float) -> void:
+	# La alerta de un golpe tiene reloj propio: mientras dura, la memoria de la
+	# onda no se gasta, porque ésta está pensada para un sonido que se desvanece
+	# con la distancia y la alerta no.
+	if _alerta:
+		_alerta_restante -= delta
+		if _alerta_restante > 0.0:
+			return
+		_alerta = false
+		_alerta_restante = 0.0
+		_memoria = 0.0
+		_ruta_impresa = false
+		print("[enemigo] se le ha pasado la ALERTA: vuelve a pasearse")
+		return
 	if _memoria <= 0.0:
 		return
 	_memoria -= delta
@@ -141,9 +283,14 @@ func _gastar_memoria(delta: float) -> void:
 
 
 # Carga contra el punto que oyó, si aún lo recuerda y no está demasiado lejos.
+# La excepción es la alerta de un golpe contra bloque sensible: esa va siempre,
+# porque el sonido se atenúa con la distancia y el golpe no.
 func _cargando() -> bool:
-	return _memoria > 0.0 \
-		and global_position.distance_to(_ultima_onda_pos) < distancia_carga
+	if _alerta:
+		return true
+	if _memoria <= 0.0:
+		return false
+	return global_position.distance_to(_ultima_onda_pos) < distancia_carga
 
 
 func _moverse(delta: float) -> void:
@@ -427,6 +574,10 @@ func _esquivar() -> void:
 	var meta := _punto_cerca(global_position, 4)
 	if meta.distance_to(global_position) < 1.0:
 		_memoria = 0.0
+		# Rendición total: si siguiera con la alerta volvería a cargar contra el
+		# mismo punto imposible y el bucle de atasco no acabaría nunca.
+		_alerta = false
+		_alerta_restante = 0.0
 		_destino = _punto_aleatorio()
 		print("[enemigo] atascado de verdad, abandona la pista")
 		return
@@ -556,6 +707,8 @@ func _aparecer(destino: Vector2) -> void:
 	_pausa = 0.0
 	_destino = destino
 	_destino_barrido = destino
+	_alerta = false
+	_alerta_restante = 0.0
 	if _jugadora != null:
 		_ultima_onda_pos = _jugadora.global_position
 	_memoria = memoria_segundos
