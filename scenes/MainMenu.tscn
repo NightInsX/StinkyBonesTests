@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://bbtromuds205c" path="res://graphics/resources/menulayer.png" id="4_l72w3"]
 [ext_resource type="Texture2D" uid="uid://qr16q5an4sue" path="res://graphics/resources/vine.png" id="5_826wr"]
 [ext_resource type="Texture2D" uid="uid://f4s7gqrid3rl" path="res://graphics/resources/caveceiling.png" id="6_826wr"]
+[ext_resource type="AudioStream" uid="uid://b2av8cpadg0mv" path="res://sounds/menu_inicio.wav" id="7_ucygd"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_2wh52"]
 shader = ExtResource("3_ow34m")
@@ -152,6 +153,18 @@ tracks/5/keys = {
 "update": 0,
 "values": [Vector2(-640, 0)]
 }
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("AudioStreamPlayer:volume_db")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
 
 [sub_resource type="Animation" id="Animation_8a8k8"]
 resource_name = "outro"
@@ -179,6 +192,18 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("AudioStreamPlayer:volume_db")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, -80.0]
 }
 
 [sub_resource type="Animation" id="Animation_l72w3"]
@@ -318,10 +343,10 @@ grow_vertical = 2
 [node name="Panel" type="Panel" parent="ColorRect" unique_id=1489419077]
 z_index = -1
 layout_mode = 0
-offset_left = 424.0
-offset_top = 168.0
-offset_right = 1447.9976
-offset_bottom = 336.0
+offset_left = 416.0
+offset_top = 192.0
+offset_right = 1439.9976
+offset_bottom = 360.0
 theme_override_styles/panel = SubResource("StyleBoxTexture_wwruc")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="ColorRect" unique_id=492316423]
@@ -366,10 +391,12 @@ text = "Exit"
 [node name="Label" type="Label" parent="TitleScreen" unique_id=2090640395]
 layout_mode = 0
 offset_left = 24.0
-offset_top = 64.0
-offset_right = 256.0
-offset_bottom = 127.0
-text = "Game logo"
+offset_top = 56.0
+offset_right = 320.0
+offset_bottom = 155.0
+theme_override_font_sizes/font_size = 43
+text = "Cavern 
+Cadenza"
 
 [node name="Peaks" type="TextureRect" parent="TitleScreen" unique_id=986769366]
 z_index = 2
@@ -453,7 +480,8 @@ text = "Controls:
 Left click - Echo"
 horizontal_alignment = 1
 
-[node name="Button2" type="Button" parent="Settings" unique_id=2036214075]
+[node name="Button2" type="Button" parent="Settings" unique_id=2036214075 groups=["Buttons"]]
+visible = false
 layout_mode = 0
 offset_left = 24.0
 offset_top = 304.0
@@ -487,10 +515,10 @@ text = "Game designer -
 Backend coder - Webos_con_Atun
 Frontend coder - Akera the Ram
 Screenwriter - kurigege
-Music - "
+Music - xian"
 horizontal_alignment = 1
 
-[node name="Button2" type="Button" parent="Credits" unique_id=401234022]
+[node name="Button2" type="Button" parent="Credits" unique_id=401234022 groups=["Buttons"]]
 layout_mode = 0
 offset_left = 24.0
 offset_top = 304.0
@@ -511,6 +539,8 @@ libraries/ = SubResource("AnimationLibrary_826wr")
 autoplay = &"ready"
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=753173397]
+stream = ExtResource("7_ucygd")
+autoplay = true
 
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Play" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Settings" to="." method="_on_settings_pressed"]

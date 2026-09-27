@@ -2,6 +2,9 @@
 
 [ext_resource type="Theme" uid="uid://d27b4w6eanc0f" path="res://graphics/themes/menutheme.tres" id="1_eda3u"]
 [ext_resource type="Script" uid="uid://cakx1kdkgsdqk" path="res://scripts/intro_sequence.gd" id="1_ilyg3"]
+[ext_resource type="AudioStream" uid="uid://64qgcat8h48r" path="res://sounds/voz1.wav" id="3_5nl8m"]
+[ext_resource type="AudioStream" uid="uid://k42738yqq4ci" path="res://sounds/voz2.wav" id="4_sl0p2"]
+[ext_resource type="AudioStream" uid="uid://dpjyqgoct3vjn" path="res://sounds/voz3.wav" id="5_r2rjq"]
 
 [sub_resource type="Animation" id="Animation_yle8u"]
 length = 0.001
@@ -28,6 +31,18 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1),
 "update": 0,
 "values": [Color(1, 1, 1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Label:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
 }
 
 [sub_resource type="Animation" id="Animation_he61g"]
@@ -56,6 +71,18 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Label:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
 }
 
 [sub_resource type="Animation" id="Animation_eda3u"]
@@ -109,7 +136,7 @@ offset_left = 64.0
 offset_top = 32.0
 offset_right = 576.0
 offset_bottom = 328.0
-theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/normal_font_size = 20
 
 [node name="Label" type="Label" parent="." unique_id=828006061]
 layout_mode = 0
@@ -141,10 +168,13 @@ autostart = true
 wait_time = 0.05
 
 [node name="narrator" type="AudioStreamPlayer" parent="." unique_id=792485363]
+stream = ExtResource("3_5nl8m")
 
 [node name="girl" type="AudioStreamPlayer" parent="." unique_id=362642799]
+stream = ExtResource("4_sl0p2")
 
 [node name="misterious" type="AudioStreamPlayer" parent="." unique_id=427474125]
+stream = ExtResource("5_r2rjq")
 
 [connection signal="animation_finished" from="AnimationPlayer" to="." method="_on_animation_player_animation_finished"]
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

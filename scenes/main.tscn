@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/llave.tscn" id="9_llave"]
 [ext_resource type="PackedScene" path="res://scenes/puerta.tscn" id="10_puerta"]
 [ext_resource type="Script" uid="uid://bpemj21j1bgw1" path="res://scripts/objetivo.gd" id="11_objetivo"]
+[ext_resource type="AudioStream" uid="uid://chi414au5g7v8" path="res://sounds/outra_musica.wav" id="11_ya4ey"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ybya7"]
 size = Vector2(146.25, 142.5)
@@ -152,10 +153,13 @@ scale = Vector2(0.5041494, 1.0564516)
 polygon = PackedVector2Array(-0.016479492, -17.374046, 946, -24, 962, 100, 477, 98, -7.9506836, 106.62597)
 
 [node name="DirectionalLight2D" type="DirectionalLight2D" parent="." unique_id=1767277561]
-visible = false
 position = Vector2(100, 188)
 scale = Vector2(1.375, 1.375)
 color = Color(0.85, 0.85749996, 1, 1)
 blend_mode = 1
+
+[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=1772209675]
+stream = ExtResource("11_ya4ey")
+autoplay = true
 
 [connection signal="area_entered" from="girl/Zona_Muerte" to="girl" method="_on_zona_muerte_area_entered"]
