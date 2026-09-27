@@ -105,11 +105,11 @@ script = ExtResource("1_ilyg3")
 
 [node name="dialogue" type="RichTextLabel" parent="." unique_id=1063343424]
 layout_mode = 0
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 624.0
-offset_bottom = 344.0
-theme_override_font_sizes/normal_font_size = 26
+offset_left = 64.0
+offset_top = 32.0
+offset_right = 576.0
+offset_bottom = 328.0
+theme_override_font_sizes/normal_font_size = 16
 
 [node name="Label" type="Label" parent="." unique_id=828006061]
 layout_mode = 0
@@ -138,10 +138,13 @@ one_shot = true
 autostart = true
 
 [node name="DialogueTimer" type="Timer" parent="." unique_id=474145836]
+wait_time = 0.05
 
 [node name="narrator" type="AudioStreamPlayer" parent="." unique_id=792485363]
 
 [node name="girl" type="AudioStreamPlayer" parent="." unique_id=362642799]
+
+[node name="misterious" type="AudioStreamPlayer" parent="." unique_id=427474125]
 
 [connection signal="animation_finished" from="AnimationPlayer" to="." method="_on_animation_player_animation_finished"]
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
