@@ -9,6 +9,18 @@ const CAPA_MURO := 8  # bit 3
 ## Bit 0 de la máscara de capas. La Girl y el enemigo.
 const CAPA_PERSONAJE := 1  # bit 0
 
+## Z de dibujo del bloque en reposo y mientras dura la marca. En reposo el
+## bloque se queda POR DEBAJO de la capa de teselas: así el relleno oscuro es
+## lo que asoma por los huecos del tile de muro y la textura se dibuja encima,
+## que es lo que hace que un muro se lea como muro texturizado y no como una
+## mancha de color. Al chocar, la marca pasa por encima de la textura, que es
+## lo que hace falta para que el destello cubra el muro entero: si se quedara
+## debajo, la roca taparía el destello y sólo brillaría el fondo.
+## El valor es relativo al padre (z_as_relative), y el padre está en 0 igual
+## que la capa de teselas, así que -1 queda por debajo y 1 por delante.
+const Z_REPOSO := -1
+const Z_CHOCADO := 1
+
 # Bloque de muro del mapa. Guarda si una onda de la Girl acaba de chocar contra
 # él, y esa marca se apaga sola pasado un tiempo.
 #
@@ -65,6 +77,7 @@ func _ready() -> void:
 	# del orden de trescientos muros y casi ninguno choca nunca, y tenerlos a
 	# todos despiertos costaba ~0.2 ms por frame: el que choca se despierta solo,
 	# en `chocar()`, y se vuelve a dormir en `_apagar()`.
+	z_index = Z_REPOSO
 	set_process(false)
 
 
@@ -74,6 +87,7 @@ func _ready() -> void:
 func chocar() -> void:
 	chocado = true
 	_restante = duracion_chocado
+	z_index = Z_CHOCADO
 	set_process(true)
 	queue_redraw()
 	impactado.emit(duracion_chocado)
@@ -90,6 +104,7 @@ func tiempo_restante() -> float:
 func _apagar() -> void:
 	chocado = false
 	_restante = 0.0
+	z_index = Z_REPOSO
 	set_process(false)
 	queue_redraw()
 
@@ -107,10 +122,13 @@ func _process(delta: float) -> void:
 
 
 ## Pinta el rectángulo de muro con el color que le toca. No se toca la física ni
-## se recolorea la forma: el muro es una mancha negra sobre el suelo, y encima se
-## dibuja el mismo rectángulo con el color del estado. Dibujarlo aquí en vez de
-## usar `CollisionShape2D.draw()` es a propósito, porque ese método no existe en
-## todas las versiones de Godot 4 y el rectángulo sale directamente del hijo.
+## se recolorea la forma: el rectángulo es el fondo del muro, y se dibuja debajo
+## de la tesela (ver `Z_REPOSO`) para que la textura del muro quede encima. Cuando
+## hay marca, el mismo rectángulo pasa por delante de la tesela con el color del
+## estado, que es lo que hace que el destello se vea sobre el muro entero.
+## Dibujarlo aquí en vez de usar `CollisionShape2D.draw()` es a propósito, porque
+## ese método no existe en todas las versiones de Godot 4 y el rectángulo sale
+## directamente del hijo.
 func _draw() -> void:
 	for hijo in get_children():
 		if not hijo is CollisionShape2D:

@@ -40,6 +40,10 @@ enum Tipo { VACIO, MURO, SUELO, UMBRAL }
 signal generar_terminada(dimensiones: Vector2i)
 
 ## TileSet con el que se pinta. Si es null se construye uno proceduralmente.
+## Para usar tus propias texturas: crea un recurso TileSet (.tres), añade tus
+## imágenes como Atlas Sources, y en "Custom Data Layers" añade una capa
+## llamada "tipo" (String) donde marques cada tile como "suelo", "muro" o
+## "umbral". Arrastra ese .tres aquí.
 @export var tile_set: TileSet
 
 @export_group("Generación")
@@ -164,6 +168,11 @@ var _regiones: Array[NavigationRegion2D] = []
 var _nav: PackedByteArray = PackedByteArray()
 var _nav_cols: int = 0
 var _nav_filas: int = 0
+
+## Fuentes del TileSet agrupadas por Tipo, leídas desde la custom data layer
+## "tipo" de cada tile. Se recalcula cada vez que se construye el tilemap, por
+## si el tile_set ha cambiado entre generaciones.
+var _fuentes_por_tipo: Dictionary = {}
 
 
 # Se genera en _enter_tree y no en _ready para que la NavigationRegion2D exista
@@ -804,11 +813,79 @@ func _limpiar() -> void:
 	_rejilla.clear()
 
 
+## Lee la custom data layer "tipo" del TileSet y agrupa los source_id
+## disponibles por cada Tipo (SUELO, MURO, UMBRAL). Si un tile no tiene la
+## etiqueta puesta, o su valor no coincide con ninguna clave conocida, se
+## asume "suelo" para no perderlo silenciosamente sin avisar.
+func _indexar_tileset(ts: TileSet) -> void:
+	_fuentes_por_tipo.clear()
+	var capa_idx := ts.get_custom_data_layer_by_name("tipo")
+	if capa_idx < 0:
+		push_warning("DTLMapa: el TileSet no tiene la custom data layer 'tipo'. "
+				+ "Todas las celdas usarán el primer source disponible.")
+		return
+	for i in range(ts.get_source_count()):
+		var source_id := ts.get_source_id(i)
+		var fuente := ts.get_source(source_id) as TileSetAtlasSource
+		if fuente == null:
+			continue
+		for j in range(fuente.get_tiles_count()):
+			var coords := fuente.get_tile_id(j)
+			var data := fuente.get_tile_data(coords, 0)
+			if data == null:
+				continue
+			var clave: String = data.get_custom_data("tipo")
+			var tipo := _tipo_de_clave(clave)
+			if not _fuentes_por_tipo.has(tipo):
+				_fuentes_por_tipo[tipo] = []
+			_fuentes_por_tipo[tipo].append({"source_id": source_id, "coords": coords})
+
+
+func _tipo_de_clave(clave: String) -> int:
+	match clave:
+		"muro":
+			return Tipo.MURO
+		"umbral":
+			return Tipo.UMBRAL
+		"suelo":
+			return Tipo.SUELO
+	# Vacío o desconocido: se trata como suelo para no romper el pintado,
+	# pero conviene revisar el TileSet si aparece este caso con frecuencia.
+	return Tipo.SUELO
+
+
+## Ajusta la capa a la resolución de tesela del TileSet. Godot dibuja cada
+## tesela a su tamaño NATIVO y no la estira hasta el lado de la celda, así que
+## un TileSet de pixel art de 32 px dentro de un mapa de `tile` px dejaría
+## huecos de tres cuartos. Escalando la capa la rejilla pintada sigue cayendo
+## exactamente donde caen la colisión y la navegación, que se calculan en
+## coordenadas del mapa con `tile`. Si ya coinciden (o el TileSet está mal
+## configurado con tamaño 0) la capa se queda a escala 1.
+func _escalar_capa(capa: TileMapLayer, ts: TileSet) -> void:
+	var celda_ts := Vector2(ts.tile_size)
+	if celda_ts.x <= 0.0 or celda_ts.y <= 0.0:
+		return
+	var objetivo := Vector2(tile, tile)
+	if not celda_ts.is_equal_approx(objetivo):
+		capa.scale = objetivo / celda_ts
+
+
 func _construir_tilemap() -> void:
 	var capa := TileMapLayer.new()
 	capa.name = "Suelo"
 	capa.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	capa.tile_set = tile_set if tile_set != null else DTLTileSet.crear(tile, semilla)
+	var ts: TileSet = tile_set if tile_set != null else DTLTileSet.crear(tile, semilla)
+	capa.tile_set = ts
+	_escalar_capa(capa, ts)
+
+	# Si el TileSet trae la custom data layer "tipo", se indexa y se pinta con
+	# los tiles reales que hayas puesto. Si no, se cae al DTLTileSet clásico
+	# (indice_para + fila de atlas), para no romper proyectos que aún no hayan
+	# migrado a texturas propias.
+	var usar_indexado := ts.get_custom_data_layer_by_name("tipo") >= 0
+	if usar_indexado:
+		_indexar_tileset(ts)
+
 	for y in range(_rejilla.size()):
 		var fila: Array = _rejilla[y]
 		for x in range(fila.size()):
@@ -816,7 +893,22 @@ func _construir_tilemap() -> void:
 			if tipo == Tipo.VACIO:
 				continue
 			var variante := absi(hash(Vector2i(x * 73856093, y * 19349663)) ^ semilla)
-			capa.set_cell(Vector2i(x, y), 0, DTLTileSet.indice_para(_fila_atlas(tipo), variante))
+
+			if usar_indexado:
+				var lista: Array = _fuentes_por_tipo.get(tipo, [])
+				if lista.is_empty():
+					# Un tipo sin tiles propios (el umbral de los mapas con
+					# puertas) se pinta con suelo: repetir textura siempre es
+					# mejor que dejar un agujero en el mapa.
+					lista = _fuentes_por_tipo.get(Tipo.SUELO, [])
+				if lista.is_empty():
+					push_warning("DTLMapa: no hay ningún tile con tipo '%s' en el TileSet."
+							% Tipo.keys()[tipo])
+					continue
+				var elegido: Dictionary = lista[variante % lista.size()]
+				capa.set_cell(Vector2i(x, y), elegido["source_id"], elegido["coords"])
+			else:
+				capa.set_cell(Vector2i(x, y), 0, DTLTileSet.indice_para(_fila_atlas(tipo), variante))
 	add_child(capa)
 	_tiles_generados = capa
 
@@ -1008,7 +1100,8 @@ func _centro_celda(celda: Vector2i) -> Vector2:
 	return Vector2(celda.x * tile + tile * 0.5, celda.y * tile + tile * 0.5)
 
 
-## Fila del atlas que corresponde a un tipo de celda canónico.
+## Fila del atlas que corresponde a un tipo de celda canónico. Solo se usa como
+## fallback cuando el TileSet no tiene la custom data layer "tipo".
 func _fila_atlas(tipo: int) -> int:
 	match tipo:
 		Tipo.MURO:
