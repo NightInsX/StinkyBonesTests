@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://cr6qc0gydc071"]
 
 [ext_resource type="Script" uid="uid://b530156is5fdc" path="res://scripts/character_body_2d.gd" id="1_0e48y"]
+[ext_resource type="TileSet" uid="uid://bbxbvpgaytknl" path="res://graphics/overworld
+/new_tile_set.tres" id="2_ya4ey"]
 [ext_resource type="Script" uid="uid://cyef8mye6q3wp" path="res://scripts/enemigo.gd" id="4_q6r6c"]
 [ext_resource type="PackedScene" path="res://scenes/mapa_dtl.tscn" id="6_mapa"]
 [ext_resource type="Script" uid="uid://derhf7g2jn2xf" path="res://scripts/mapa_colocacion.gd" id="7_colocar"]
@@ -337,6 +339,7 @@ outlines = Array[PackedVector2Array]([PackedVector2Array(-93, -104, 1059, -104, 
 position = Vector2(-2, 4)
 
 [node name="MapaDTL" parent="." unique_id=18438119 instance=ExtResource("6_mapa")]
+tile_set = ExtResource("2_ya4ey")
 
 [node name="SenalesTiles" type="Node2D" parent="." unique_id=249274714]
 script = ExtResource("8_senales")
@@ -363,7 +366,7 @@ script = ExtResource("1_0e48y")
 
 [node name="PointLight2D" type="PointLight2D" parent="girl" unique_id=848793649]
 scale = Vector2(4.9218736, 4.9609365)
-energy = 6.53
+energy = 11.98
 texture = SubResource("GradientTexture2D_choun")
 
 [node name="Sprite2D" type="Sprite2D" parent="girl" unique_id=2090177265]

@@ -134,6 +134,7 @@ func _alertar_enemigo(punto: Vector2) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("Echo") and cooldown.is_stopped():
 		emitir_onda()
+		
 
 
 func _on_onda_entrada(area: Area2D) -> void:

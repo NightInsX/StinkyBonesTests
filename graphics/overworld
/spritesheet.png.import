@@ -3,15 +3,16 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bnm4w861u5wg2"
-path="res://.godot/imported/spritesheet.png-d12fe2ccedb6fce34b1c81333cf4fb13.ctex"
+path="res://.godot/imported/spritesheet.png-4360abe7f6bdf523771b5d6e4a4e4043.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://graphics/Overworld_New/spritesheet.png"
-dest_files=["res://.godot/imported/spritesheet.png-d12fe2ccedb6fce34b1c81333cf4fb13.ctex"]
+source_file="res://graphics/overworld
+/spritesheet.png"
+dest_files=["res://.godot/imported/spritesheet.png-4360abe7f6bdf523771b5d6e4a4e4043.ctex"]
 
 [params]
 

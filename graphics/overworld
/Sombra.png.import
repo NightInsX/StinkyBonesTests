@@ -2,29 +2,17 @@
 
 importer="texture"
 type="CompressedTexture2D"
-<<<<<<< HEAD:graphics/Overworld_New/Sombra.png.import
-uid="uid://hv82s2ljwea0"
-path="res://.godot/imported/Sombra.png-7e32350da5059eef73609dca0e871588.ctex"
-=======
 uid="uid://dpgtskdcp2ejh"
 path="res://.godot/imported/Sombra.png-6f4b0e327d990d2ab6fff3cb01d12fa4.ctex"
->>>>>>> 2e8f774dfba1d709c821b047b2c86f0f0b648620:graphics/overworld
-/Sombra.png.import
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-<<<<<<< HEAD:graphics/Overworld_New/Sombra.png.import
-source_file="res://graphics/Overworld_New/Sombra.png"
-dest_files=["res://.godot/imported/Sombra.png-7e32350da5059eef73609dca0e871588.ctex"]
-=======
 source_file="res://graphics/overworld
 /Sombra.png"
 dest_files=["res://.godot/imported/Sombra.png-6f4b0e327d990d2ab6fff3cb01d12fa4.ctex"]
->>>>>>> 2e8f774dfba1d709c821b047b2c86f0f0b648620:graphics/overworld
-/Sombra.png.import
 
 [params]
 
