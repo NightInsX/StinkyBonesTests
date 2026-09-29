@@ -1,0 +1,181 @@
+[gd_scene format=3 uid="uid://ch2x67g2rt8qq"]
+
+[ext_resource type="Theme" uid="uid://d27b4w6eanc0f" path="res://graphics/themes/menutheme.tres" id="1_eda3u"]
+[ext_resource type="Script" uid="uid://cakx1kdkgsdqk" path="res://scripts/intro_sequence.gd" id="1_ilyg3"]
+[ext_resource type="AudioStream" uid="uid://64qgcat8h48r" path="res://sounds/voz1.wav" id="3_5nl8m"]
+[ext_resource type="AudioStream" uid="uid://k42738yqq4ci" path="res://sounds/voz2.wav" id="4_sl0p2"]
+[ext_resource type="AudioStream" uid="uid://dpjyqgoct3vjn" path="res://sounds/voz3.wav" id="5_r2rjq"]
+
+[sub_resource type="Animation" id="Animation_yle8u"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ColorRect:color")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(0, 0, 0, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Label:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Label:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+
+[sub_resource type="Animation" id="Animation_he61g"]
+resource_name = "ready"
+length = 4.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ColorRect:color")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(0, 0, 0, 1), Color(0, 0, 0, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Label:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(3, 4),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Label:visible")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+
+[sub_resource type="Animation" id="Animation_eda3u"]
+resource_name = "to_game"
+length = 4.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("ColorRect:color")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(0, 0, 0, 0), Color(0, 0, 0, 1)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Label:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(),
+"transitions": PackedFloat32Array(),
+"update": 0,
+"values": []
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_5nl8m"]
+_data = {
+&"RESET": SubResource("Animation_yle8u"),
+&"ready": SubResource("Animation_he61g"),
+&"to_game": SubResource("Animation_eda3u")
+}
+
+[node name="IntroSequence" type="Control" unique_id=1618779619]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_eda3u")
+script = ExtResource("1_ilyg3")
+
+[node name="dialogue" type="RichTextLabel" parent="." unique_id=1063343424]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 32.0
+offset_right = 576.0
+offset_bottom = 328.0
+theme_override_font_sizes/normal_font_size = 20
+
+[node name="Label" type="Label" parent="." unique_id=828006061]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 328.0
+offset_right = 175.0
+offset_bottom = 352.0
+text = "Press [E] to skip."
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=208401228]
+libraries/ = SubResource("AnimationLibrary_5nl8m")
+autoplay = &"ready"
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=218871424]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Timer" type="Timer" parent="." unique_id=1173504008]
+wait_time = 2.5
+one_shot = true
+autostart = true
+
+[node name="DialogueTimer" type="Timer" parent="." unique_id=474145836]
+wait_time = 0.05
+
+[node name="narrator" type="AudioStreamPlayer" parent="." unique_id=792485363]
+stream = ExtResource("3_5nl8m")
+
+[node name="girl" type="AudioStreamPlayer" parent="." unique_id=362642799]
+stream = ExtResource("4_sl0p2")
+
+[node name="misterious" type="AudioStreamPlayer" parent="." unique_id=427474125]
+stream = ExtResource("5_r2rjq")
+
+[connection signal="animation_finished" from="AnimationPlayer" to="." method="_on_animation_player_animation_finished"]
+[connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]
+[connection signal="timeout" from="DialogueTimer" to="." method="_dialogue_timer_action"]

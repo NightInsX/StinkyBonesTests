@@ -6,6 +6,8 @@
 [ext_resource type="Texture2D" uid="uid://bbtromuds205c" path="res://graphics/resources/menulayer.png" id="4_l72w3"]
 [ext_resource type="Texture2D" uid="uid://qr16q5an4sue" path="res://graphics/resources/vine.png" id="5_826wr"]
 [ext_resource type="Texture2D" uid="uid://f4s7gqrid3rl" path="res://graphics/resources/caveceiling.png" id="6_826wr"]
+[ext_resource type="AudioStream" uid="uid://b2av8cpadg0mv" path="res://sounds/menu_inicio.wav" id="7_ucygd"]
+[ext_resource type="AudioStream" uid="uid://2gsn07lqtmxg" path="res://sounds/button_select.wav" id="8_mipys"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_2wh52"]
 shader = ExtResource("3_ow34m")
@@ -140,6 +142,70 @@ tracks/4/keys = {
 "update": 0,
 "values": [Color(1, 1, 1, 1)]
 }
+tracks/5/type = "value"
+tracks/5/imported = false
+tracks/5/enabled = true
+tracks/5/path = NodePath("Credits:position")
+tracks/5/interp = 1
+tracks/5/loop_wrap = true
+tracks/5/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector2(-640, 0)]
+}
+tracks/6/type = "value"
+tracks/6/imported = false
+tracks/6/enabled = true
+tracks/6/path = NodePath("AudioStreamPlayer:volume_db")
+tracks/6/interp = 1
+tracks/6/loop_wrap = true
+tracks/6/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="Animation" id="Animation_8a8k8"]
+resource_name = "outro"
+length = 2.0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("invisible_panel:visible")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("invisible_panel:modulate")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("AudioStreamPlayer:volume_db")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 2),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, -80.0]
+}
 
 [sub_resource type="Animation" id="Animation_l72w3"]
 resource_name = "ready"
@@ -166,6 +232,46 @@ tracks/1/keys = {
 "transitions": PackedFloat32Array(1, 1),
 "update": 0,
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_7la6k"]
+resource_name = "to_credits"
+length = 1.5999999999999999
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("TitleScreen:position")
+tracks/0/interp = 2
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1.5, 1.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(0, 0), Vector2(645, 0), Vector2(640, 0)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("Settings:position")
+tracks/1/interp = 2
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1.5, 1.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(640, 0), Vector2(1085, 0), Vector2(1080, 0)]
+}
+tracks/2/type = "value"
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/path = NodePath("Credits:position")
+tracks/2/interp = 2
+tracks/2/loop_wrap = true
+tracks/2/keys = {
+"times": PackedFloat32Array(0, 1.5, 1.6),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 0,
+"values": [Vector2(-640, 0), Vector2(5, 0), Vector2(0, 0)]
 }
 
 [sub_resource type="Animation" id="Animation_mipys"]
@@ -199,7 +305,9 @@ tracks/1/keys = {
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_826wr"]
 _data = {
 &"RESET": SubResource("Animation_ow34m"),
+&"outro": SubResource("Animation_8a8k8"),
 &"ready": SubResource("Animation_l72w3"),
+&"to_credits": SubResource("Animation_7la6k"),
 &"to_settings": SubResource("Animation_mipys")
 }
 
@@ -249,7 +357,7 @@ autoplay = &"slide_cave"
 
 [node name="TitleScreen" type="Control" parent="." unique_id=766753445]
 anchors_preset = 0
-offset_right = 640.0
+offset_right = 640.001
 offset_bottom = 360.0
 
 [node name="VBoxContainer" type="VBoxContainer" parent="TitleScreen" unique_id=1715265684]
@@ -260,17 +368,23 @@ offset_right = 168.0
 offset_bottom = 320.0
 metadata/_edit_group_ = true
 
-[node name="Play" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1683232696]
+[node name="Play" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1683232696 groups=["Buttons"]]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Play"
 
-[node name="Settings" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1475383543]
+[node name="Settings" type="Button" parent="TitleScreen/VBoxContainer" unique_id=1475383543 groups=["Buttons"]]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Settings"
 
-[node name="Exit" type="Button" parent="TitleScreen/VBoxContainer" unique_id=141068482]
+[node name="Credits" type="Button" parent="TitleScreen/VBoxContainer" unique_id=2003417569 groups=["Buttons"]]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Credits
+"
+
+[node name="Exit" type="Button" parent="TitleScreen/VBoxContainer" unique_id=141068482 groups=["Buttons"]]
 layout_mode = 2
 size_flags_vertical = 3
 text = "Exit"
@@ -278,14 +392,17 @@ text = "Exit"
 [node name="Label" type="Label" parent="TitleScreen" unique_id=2090640395]
 layout_mode = 0
 offset_left = 24.0
-offset_top = 64.0
-offset_right = 256.0
-offset_bottom = 127.0
-text = "Game logo"
+offset_top = 56.0
+offset_right = 320.0
+offset_bottom = 155.0
+theme_override_font_sizes/font_size = 43
+text = "Cavern 
+Cadenza"
 
 [node name="Peaks" type="TextureRect" parent="TitleScreen" unique_id=986769366]
 z_index = 2
 layout_mode = 0
+offset_left = -704.0
 offset_right = 1280.0
 offset_bottom = 48.0
 texture = ExtResource("6_826wr")
@@ -294,7 +411,7 @@ stretch_mode = 1
 [node name="Settings" type="Control" parent="." unique_id=1848050210]
 anchors_preset = 0
 offset_left = 640.0
-offset_right = 1279.9988
+offset_right = 1279.9989
 offset_bottom = 360.0
 
 [node name="Label" type="Label" parent="Settings" unique_id=464689345]
@@ -312,7 +429,7 @@ offset_top = 160.0
 offset_right = 56.0
 offset_bottom = 192.0
 
-[node name="Button" type="Button" parent="Settings" unique_id=744446287]
+[node name="Button" type="Button" parent="Settings" unique_id=744446287 groups=["Buttons"]]
 layout_mode = 0
 offset_left = 64.0
 offset_top = 160.0
@@ -364,7 +481,44 @@ text = "Controls:
 Left click - Echo"
 horizontal_alignment = 1
 
-[node name="Button2" type="Button" parent="Settings" unique_id=2036214075]
+[node name="Button2" type="Button" parent="Settings" unique_id=2036214075 groups=["Buttons"]]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 304.0
+offset_right = 128.0
+offset_bottom = 344.0
+text = "Go back"
+
+[node name="Credits" type="Control" parent="." unique_id=1662802759]
+anchors_preset = 0
+offset_left = -640.0
+offset_right = -600.0
+offset_bottom = 40.0
+
+[node name="Label" type="Label" parent="Credits" unique_id=1889806557]
+layout_mode = 0
+offset_left = 128.0
+offset_top = 64.0
+offset_right = 304.0
+offset_bottom = 88.0
+text = "-0 CREDITS 0-"
+horizontal_alignment = 1
+
+[node name="Label2" type="Label" parent="Credits" unique_id=1499519802]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 96.0
+offset_right = 368.0
+offset_bottom = 320.0
+theme_override_font_sizes/font_size = 16
+text = "Game designer - 
+Backend coder - Webos_con_Atun
+Frontend coder - Akera the Ram
+Screenwriter - kurigege
+Music - xian"
+horizontal_alignment = 1
+
+[node name="Button2" type="Button" parent="Credits" unique_id=401234022 groups=["Buttons"]]
 layout_mode = 0
 offset_left = 24.0
 offset_top = 304.0
@@ -385,12 +539,21 @@ libraries/ = SubResource("AnimationLibrary_826wr")
 autoplay = &"ready"
 
 [node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="." unique_id=753173397]
+stream = ExtResource("7_ucygd")
+autoplay = true
+
+[node name="AudioStreamPlayer2" type="AudioStreamPlayer" parent="." unique_id=1566586821]
+stream = ExtResource("8_mipys")
+volume_db = -15.0
+pitch_scale = 0.54
 
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Play" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Settings" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="TitleScreen/VBoxContainer/Credits" to="." method="_on_credits_pressed"]
 [connection signal="pressed" from="TitleScreen/VBoxContainer/Exit" to="." method="_on_exit_pressed"]
 [connection signal="pressed" from="Settings/Button" to="." method="_toggle_fullscreen"]
 [connection signal="drag_ended" from="Settings/HSlider" to="." method="_on_h_slider_drag_ended"]
 [connection signal="value_changed" from="Settings/HSlider" to="." method="_on_h_slider_value_changed"]
 [connection signal="pressed" from="Settings/Button2" to="." method="_on_exiting_settings"]
+[connection signal="pressed" from="Credits/Button2" to="." method="_on_button_2_pressed"]
 [connection signal="animation_finished" from="Animations" to="." method="_on_animations_animation_finished"]

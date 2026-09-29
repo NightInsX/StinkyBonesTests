@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://hv82s2ljwea0"
-path="res://.godot/imported/Sombra.png-7e32350da5059eef73609dca0e871588.ctex"
+uid="uid://db3kx0av25uk6"
+path="res://.godot/imported/jumpscare(cringe but 512x512).png-e392477c8c36c9f9dec4e33c82164c98.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://graphics/Overworld_New/Sombra.png"
-dest_files=["res://.godot/imported/Sombra.png-7e32350da5059eef73609dca0e871588.ctex"]
+source_file="res://graphics/Jumpscare (cringe)/jumpscare(cringe but 512x512).png"
+dest_files=["res://.godot/imported/jumpscare(cringe but 512x512).png-e392477c8c36c9f9dec4e33c82164c98.ctex"]
 
 [params]
 
